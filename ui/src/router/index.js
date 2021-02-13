@@ -19,7 +19,6 @@ const routes = [
     component: () => import(/* webpackChunkName: "units" */ '../views/Units.vue')
   }
 ]
-
 const router = new VueRouter({
   routes
 })

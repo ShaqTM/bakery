@@ -51,7 +51,7 @@ func GetOrderQuerry(id int) string {
 		orders.fact_cost,
 		orders.materials_cost
 	FROM 
-		public.orders AS orders 
+		public.orders AS orders
 			LEFT JOIN public.recipes AS recipes 
 			ON orders.recipe_id = recipes.id 
 	WHERE 
@@ -69,7 +69,8 @@ func GetOrderContentQuerry(id int) string {
 		order_details.string_order,
 		order_details.price,
 		order_details.cost,
-		units.name AS unit_name
+		units.name AS unit_name,
+		units.short_name AS unit_short_name
 	FROM  
 		public.order_details AS order_details 
 	 		LEFT JOIN public.materials AS materials 
@@ -91,7 +92,8 @@ func GetRecipeContentQuery(id int) string {
 		materials.name AS material_name,
 		recipes_content.qty,
 		recipes_content.string_order,
-		units.name AS unit_name
+		units.name AS unit_name,
+		units.short_name AS unit_short_name
 	FROM 
 		public.recipes_content AS recipes_content 
 			LEFT JOIN public.materials AS materials 
@@ -140,6 +142,7 @@ func GetRecipeContentWithPricesQuery(id int) string {
 		recipes_content.qty,
 		recipes_content.string_order,
 		units.name AS unit_name,
+		units.short_name AS unit_short_name,
 		ISNULL(prices.price,0) AS price,
 		materials.coefficient AS coefficient
 	FROM 
@@ -187,8 +190,10 @@ func GetMaterialWithPricesQuery(id int) string {
 		materials.recipes_content.qty,
 		materials.recipe_unit_id,
 		ISNULL(units1.name,'') AS recipe_unit_name,
+		ISNULL(units1.short_name,'') AS recipe_unit_short_name,
 		materials.price_unit_id,
 		ISNULL(units2.name,'') AS price_unit_name,
+		ISNULL(units2.short_name,'') AS price_unit_short_name,
 		materials.coefficient,
 		ISNULL(prices.price,0) AS price
 	FROM 
@@ -235,8 +240,10 @@ func GetMaterialsWithPricesQuery() string {
 		materials.recipes_content.qty,
 		materials.recipe_unit_id,
 		ISNULL(units1.name,'') AS recipe_unit_name,
+		ISNULL(units1.short_name,'') AS recipe_unit_short_name,
 		materials.price_unit_id,
 		ISNULL(units2.name,'') AS price_unit_name,
+		ISNULL(units2.short_name,'') AS price_unit_short_name,
 		materials.coefficient,
 		ISNULL(prices.price,0) AS price
 	FROM 
@@ -262,9 +269,11 @@ func GetMaterialQuery(id int) string {
 		materials.recipes_content.qty,
 		materials.recipe_unit_id,
 		ISNULL(units1.name,'') AS recipe_unit_name,
+		ISNULL(units1.short_name,'') AS recipe_unit_short_name,
 		materials.price_unit_id,
 		ISNULL(units2.name,'') AS price_unit_name,
-		materials.coefficient,
+		ISNULL(units2.short_name,'') AS price_unit_short_name,
+		materials.coefficient
 	FROM 
 		public.materials AS materials 
 			LEFT JOIN public.units AS units1
@@ -288,9 +297,11 @@ func GetMaterialsQuery() string {
 		materials.recipes_content.qty,
 		materials.recipe_unit_id,
 		ISNULL(units1.name,'') AS recipe_unit_name,
+		ISNULL(units1.short_name,'') AS recipe_unit_short_name,
 		materials.price_unit_id,
 		ISNULL(units2.name,'') AS price_unit_name,
-		materials.coefficient,
+		ISNULL(units2.short_name,'') AS price_unit_short_name,
+		materials.coefficient
 	FROM 
 		public.materials AS materials 
 			LEFT JOIN public.units AS units1

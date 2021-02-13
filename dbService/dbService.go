@@ -127,6 +127,7 @@ func updateDbToVerion0(db *sql.DB) {
 	CREATE TABLE public.units(
 		id serial,
 		name varchar(200) not null,
+		short_name varchar(200) not null,
 		constraint id_units primary key (id));
 	CREATE TABLE public.materials(
 		id serial,
