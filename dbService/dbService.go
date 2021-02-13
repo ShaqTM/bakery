@@ -243,7 +243,7 @@ func (mdb MDB) UpdateTableData(tableName string, data []map[string]interface{}, 
 	rows, err := db.Query(`SELECT * FROM ` + tableName + ` WHERE false`)
 	if err != nil {
 		fmt.Println("Error reading data: ", err)
-		return -1
+		return false
 	}
 	cols, _ := rows.Columns()
 
