@@ -2,6 +2,7 @@ package main
 
 import (
 	dbservice "bakery/dbService"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -27,9 +28,13 @@ func main() {
 
 func writeunit(mdb dbservice.MDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var value map[string]interface{}
+		jsonMap := make(map[string]interface{})
+		err := json.Unmarshal([]byte(jsonStr), &jsonMap)
+		if err != nil {
+			panic(err)
+		}
 
-		mdb.UpdateData("units")
+		mdb.UpdateData("units", jsonMap)
 		options := ""
 		device_list := mdb.Get_devices()
 		for _, device_name := range device_list {
