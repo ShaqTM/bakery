@@ -15,11 +15,20 @@ export default new Vuex.Store({
   getters:{
     getUnits:state=>{
         return state.units
-    }
+    },
+    getUnit:(state)=>(id)=>state.units.find(unit => unit.id === id)
+
   },
   mutations: {
-    increment (state) {
-      state.count++
+    writeUnit(state,payload) {
+        if (payload.id!=-1){
+            var mUnit = state.units.find(unit => unit.id === payload.id)
+            mUnit.name = payload.name
+            mUnit.short_name = payload.short_name
+        }else{
+            state.units.push({id:100,name:payload.name,short_name:payload.short_name})
+        }
+      
     }
   }
 })
