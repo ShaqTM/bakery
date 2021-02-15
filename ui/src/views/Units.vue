@@ -56,18 +56,25 @@ import Unit from "../views/Unit"
 
       return {mdata:mdata}
     },
+    created() {
+      this.$store.dispatch('readUnits')
+    },
     methods:{
       openDialog(id){
         this.mdata['id']=id
         if (id==-1) {
           this.mdata['short_name']=""
           this.mdata['name']=""
+          this.mdata['dialog']=true        
         }else{
-          var mUnit = this.$store.getters.getUnit(id);
-          this.mdata['short_name']=mUnit.short_name
-          this.mdata['name']=mUnit.name
+          this.$store.dispatch('readUnit', id)
+            .then(resp=>{
+              this.mdata['short_name']=resp.data.short_name
+              this.mdata['name']=resp.data.name
+              this.mdata['dialog']=true        
+            })
+            .catch(err => console.log(err))
         }
-        this.mdata['dialog']=true        
       },
     }
   }

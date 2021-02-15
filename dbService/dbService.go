@@ -15,11 +15,11 @@ type MDB struct {
 	Pdb **sql.DB
 }
 
-const dbConnectString = "host=localhost port=5432 user=postgres password=Mm000000 dbname=bakery sslmode=disable"
-const dbConnectStringInit = "host=localhost port=5432 user=postgres password=Mm000000 dbname=postgres sslmode=disable"
+const dbConnectString = "host=localhost port=5432 user=postgres password=qazplm dbname=bakery sslmode=disable"
+const dbConnectStringInit = "host=localhost port=5432 user=postgres password=qazplm dbname=postgres sslmode=disable"
 
 //InitDatabase Проверка наличия БД, создание и обновление до последней версии
-func (mdb MDB) InitDatabase() {
+func (mdb *MDB) InitDatabase() {
 
 	initdb, err := sql.Open("postgres", dbConnectStringInit)
 
@@ -47,7 +47,7 @@ func (mdb MDB) InitDatabase() {
 		panic("Database error")
 	}
 	updateDb(db)
-	mdb.Pdb = &db
+	(*mdb).Pdb = &db
 
 }
 func createDb(db *sql.DB) {
@@ -61,8 +61,8 @@ func createDb(db *sql.DB) {
 }
 
 func updateDb(db *sql.DB) {
-
-	dbVersion := -1
+	var dbVersion float32
+	dbVersion = -1
 	rows, err := db.Query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings'")
 	if err != nil {
 		fmt.Println("Error searching table:", err)
@@ -88,13 +88,13 @@ func updateDb(db *sql.DB) {
 	}
 
 }
-func getDbVersion(db *sql.DB) int {
+func getDbVersion(db *sql.DB) float32 {
 	rows, err := db.Query(`SELECT numeric_value FROM public.settings WHERE name = 'dbVersion'`)
 	if err != nil {
 		fmt.Println("Error inserting dbVersion data: ", err)
 		panic("Error inserting dbVersion data")
 	}
-	var version int
+	var version float32
 	version = -1
 	if rows.Next() {
 		err = rows.Scan(&version)
@@ -106,7 +106,7 @@ func getDbVersion(db *sql.DB) int {
 	return version
 }
 
-func setDbVersion(version uint8, db *sql.DB) {
+func setDbVersion(version float32, db *sql.DB) {
 	insertString := ""
 	if getDbVersion(db) == -1 {
 
@@ -189,13 +189,13 @@ func updateDbToVerion0(db *sql.DB) {
 }
 
 //UpdateData Запись данных в таблицу
-func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) int {
+func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) (int, error) {
 	db := *mdb.Pdb
 
 	rows, err := db.Query(`SELECT * FROM ` + tableName + ` WHERE false`)
 	if err != nil {
 		fmt.Println("Error reading data: ", err)
-		return -1
+		return -1, err
 	}
 	cols, _ := rows.Columns()
 
@@ -205,7 +205,7 @@ func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) int {
 	newRecord := false
 	valueIndex := 1
 	for _, col := range cols {
-		if col == "id" && data[col] == -1 {
+		if col == "id" && int((data[col]).(float64)) == -1 {
 			newRecord = true
 			continue
 		}
@@ -225,36 +225,36 @@ func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) int {
 		err := db.QueryRow(`insert into public.`+tableName+`(`+namesString+`) VALUES(`+placeholdersString+`) RETURNING id;`, vals...).Scan(&lastInsertID)
 		if err != nil {
 			fmt.Println("Error inserting data: ", err)
-			return -1
+			return -1, err
 		}
-		return lastInsertID
+		return lastInsertID, nil
 	}
-	_, err = db.Exec(`UPDATE public.`+tableName+` SET (`+namesString+`) = (`+placeholdersString+`) WHERE id = `+strconv.Itoa(data["id"].(int))+`;`, vals...)
+	_, err = db.Exec(`UPDATE public.`+tableName+` SET (`+namesString+`) = (`+placeholdersString+`) WHERE id = `+strconv.Itoa(int(data["id"].(float64)))+`;`, vals...)
 	if err != nil {
 		fmt.Println("Error updating data: ", err)
-		return -1
+		return -1, err
 	}
-	return data["id"].(int)
+	return int(data["id"].(float64)), nil
 
 }
 
 //UpdateTableData Обновляет данные в табличной части
-func (mdb MDB) UpdateTableData(tableName string, data []map[string]interface{}, id int) bool {
+func (mdb MDB) UpdateTableData(tableName string, data []map[string]interface{}, id int) error {
 	db := *mdb.Pdb
 	rows, err := db.Query(`SELECT * FROM ` + tableName + ` WHERE false`)
 	if err != nil {
 		fmt.Println("Error reading data: ", err)
-		return false
+		return err
 	}
 	cols, _ := rows.Columns()
 
 	_, err = db.Exec(`DELETE FROM public.` + tableName + ` WHERE id = ` + strconv.Itoa(id) + `;`)
 	if err != nil {
 		fmt.Println("Error deleting old rows: ", err)
-		return false
+		return err
 	}
 	if len(data) == 0 {
-		return true
+		return nil
 	}
 	namesString := ""
 	placeholdersString := ""
@@ -272,7 +272,7 @@ func (mdb MDB) UpdateTableData(tableName string, data []map[string]interface{}, 
 	stmt, err := db.Prepare(`insert into public.` + tableName + `(` + namesString + `) VALUES(` + placeholdersString + `);`)
 	if err != nil {
 		fmt.Println("Error preparing for inserting data: ", err)
-		return false
+		return err
 	}
 	for _, item := range data {
 		vals := []interface{}{}
@@ -285,31 +285,31 @@ func (mdb MDB) UpdateTableData(tableName string, data []map[string]interface{}, 
 		_, err := stmt.Exec(vals...)
 		if err != nil {
 			fmt.Println("Error inserting data: ", err)
-			return false
+			return err
 		}
 	}
-	return true
+	return nil
 }
 
 //DeleteData уделение данных в таблице по id
-func (mdb MDB) DeleteData(tableName string, id int) bool {
+func (mdb MDB) DeleteData(tableName string, id int) error {
 	db := *mdb.Pdb
 	_, err := db.Exec(`DELETE FROM public.` + tableName + ` WHERE id = ` + strconv.Itoa(id) + `;`)
 	if err != nil {
 		fmt.Println("Error deleting old rows: ", err)
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
 //ReadRow Выполняет запрос к SQL и возвращает одну строку в виде map
-func (mdb MDB) ReadRow(queryText string) (bool, map[string]interface{}) {
+func (mdb MDB) ReadRow(queryText string) (map[string]interface{}, error) {
 	data := make(map[string]interface{})
 	db := *mdb.Pdb
 	rows, err := db.Query(queryText)
 	if err != nil {
 		fmt.Println("Error reading data: ", err)
-		return false, data
+		return data, err
 	}
 	cols, _ := rows.Columns()
 	columns := make([]interface{}, len(cols))
@@ -317,29 +317,31 @@ func (mdb MDB) ReadRow(queryText string) (bool, map[string]interface{}) {
 	for i := range columns {
 		columnPointers[i] = &columns[i]
 	}
-
+	if !rows.Next() {
+		return data, nil
+	}
 	// Scan the result into the column pointers...
 	if err := rows.Scan(columnPointers...); err != nil {
 		fmt.Println("Error reading data: ", err)
-		return false, data
+		return data, err
 	}
 
 	for i, colName := range cols {
 		val := columnPointers[i].(*interface{})
 		data[colName] = *val
 	}
-	return true, data
+	return data, nil
 }
 
 //ReadRows Выполняет запрос к SQL и возвращает строки в виде []map
-func (mdb MDB) ReadRows(queryText string) (bool, []map[string]interface{}) {
+func (mdb MDB) ReadRows(queryText string) ([]map[string]interface{}, error) {
 
 	dataArray := make([]map[string]interface{}, 0)
 	db := *mdb.Pdb
 	rows, err := db.Query(queryText) // Note: Ignoring errors for brevity
 	if err != nil {
 		fmt.Println("Error reading data: ", err)
-		return false, dataArray
+		return dataArray, err
 	}
 	cols, _ := rows.Columns()
 	columns := make([]interface{}, len(cols))
@@ -351,7 +353,7 @@ func (mdb MDB) ReadRows(queryText string) (bool, []map[string]interface{}) {
 	for rows.Next() {
 		if err := rows.Scan(columnPointers...); err != nil {
 			fmt.Println("Error reading data: ", err)
-			return false, dataArray
+			return dataArray, err
 		}
 		data := make(map[string]interface{})
 		for i, colName := range cols {
@@ -360,77 +362,82 @@ func (mdb MDB) ReadRows(queryText string) (bool, []map[string]interface{}) {
 		}
 		dataArray = append(dataArray, data)
 	}
-	return true, dataArray
+	return dataArray, nil
 }
 
 //ReadOrderList Читает список заказов
-func (mdb MDB) ReadOrderList() (bool, []map[string]interface{}) {
+func (mdb MDB) ReadOrderList() ([]map[string]interface{}, error) {
 	return mdb.ReadRows(OrdersQuery)
 }
 
 //ReadOrder Читает заказ по id
-func (mdb MDB) ReadOrder(id int) (bool, map[string]interface{}) {
-	res, data := mdb.ReadRow(GetOrderQuerry(id))
-	if !res {
-		return res, data
+func (mdb MDB) ReadOrder(id int) (map[string]interface{}, error) {
+	data, err := mdb.ReadRow(GetOrderQuerry(id))
+	if err != nil {
+		return data, err
 	}
-	res, content := mdb.ReadOrderContent(id)
-	if !res {
-		return res, data
+	content, err := mdb.ReadOrderContent(id)
+	if err != nil {
+		return data, err
 	}
 	data["content"] = content
-	return res, data
+	return data, nil
 }
 
 //ReadOrderContent Читает табличную часть заказа
-func (mdb MDB) ReadOrderContent(id int) (bool, []map[string]interface{}) {
+func (mdb MDB) ReadOrderContent(id int) ([]map[string]interface{}, error) {
 	return mdb.ReadRows(GetOrderContentQuerry(id))
 }
 
 //ReadRecipesList Читает список рецептов
-func (mdb MDB) ReadRecipesList() (bool, []map[string]interface{}) {
+func (mdb MDB) ReadRecipesList() ([]map[string]interface{}, error) {
 	return mdb.ReadRows(GetRowsQuerry("recipes"))
 }
 
 //ReadRecipe Читает рецепт по id
-func (mdb MDB) ReadRecipe(id int) (bool, map[string]interface{}) {
-	res, data := mdb.ReadRow(GetRowQuerry("recipes", id))
-	if !res {
-		return res, data
+func (mdb MDB) ReadRecipe(id int) (map[string]interface{}, error) {
+	data, err := mdb.ReadRow(GetRowQuerry("recipes", id))
+	if err != nil {
+		return data, err
 	}
-	res, content := mdb.ReadRecipeContent(id)
-	if !res {
-		return res, data
+	content, err := mdb.ReadRecipeContent(id)
+	if err != nil {
+		return data, err
 	}
 	data["content"] = content
-	return res, data
+	return data, nil
 }
 
 //ReadRecipeContent Читает табличную часть рецепта по id
-func (mdb MDB) ReadRecipeContent(id int) (bool, []map[string]interface{}) {
+func (mdb MDB) ReadRecipeContent(id int) ([]map[string]interface{}, error) {
 	return mdb.ReadRows(GetRecipeContentQuery(id))
 }
 
 //ReadRecipeContentWithPrice Читает табличную часть рецепта с ценами по id
-func (mdb MDB) ReadRecipeContentWithPrice(id int) (bool, []map[string]interface{}) {
+func (mdb MDB) ReadRecipeContentWithPrice(id int) ([]map[string]interface{}, error) {
 	return mdb.ReadRows(GetRecipeContentWithPricesQuery(id))
 }
 
 //ReadUnits читает список единиц измерения
-func (mdb MDB) ReadUnits() (bool, []map[string]interface{}) {
+func (mdb MDB) ReadUnits() ([]map[string]interface{}, error) {
 	return mdb.ReadRows(GetRowsQuerry("units"))
 }
 
 //ReadMaterials читает список материалов
-func (mdb MDB) ReadMaterials(prices bool) (bool, []map[string]interface{}) {
+func (mdb MDB) ReadMaterials(prices bool) ([]map[string]interface{}, error) {
 	if prices {
 		return mdb.ReadRows(GetMaterialsWithPricesQuery())
 	}
 	return mdb.ReadRows(GetMaterialsQuery())
 }
 
+//ReadUnit читает единицу измерения
+func (mdb MDB) ReadUnit(id int) (map[string]interface{}, error) {
+	return mdb.ReadRow(GetRowQuerry("units", id))
+}
+
 //ReadMaterial читает материал по id
-func (mdb MDB) ReadMaterial(prices bool, id int) (bool, map[string]interface{}) {
+func (mdb MDB) ReadMaterial(prices bool, id int) (map[string]interface{}, error) {
 	if prices {
 		return mdb.ReadRow(GetMaterialWithPricesQuery(id))
 	}

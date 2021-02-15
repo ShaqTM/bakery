@@ -5,7 +5,7 @@ import router from './router'
 import store from './store'
 import axios from 'axios'
 axios.defaults.withCredentials = false
-axios.defaults.baseURL = 'http://127.0.0.1:9000';
+axios.defaults.baseURL = 'http://127.0.0.1:5000';
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 Vue.prototype.$http = axios;
 

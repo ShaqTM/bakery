@@ -73,7 +73,7 @@
 //    },
     methods:{
       saveData(){
-        this.$store.commit('writeUnit',this.content)
+        this.$store.dispatch('writeUnit',this.content)
         this.content.dialog= false
 
       }
