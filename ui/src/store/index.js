@@ -34,7 +34,11 @@ export default new Vuex.Store({
     },
     updateUnits(state,resp){
       state.units = resp.data
+    },
+    emptyCommit(){
+        
     }
+  
   },
 //    updateUnit(state,resp){
 //      state.unit.id = resp.data.id
@@ -61,14 +65,16 @@ export default new Vuex.Store({
       .catch(err => console.log(err))
     },
 
-    readUnit(id){
+    readUnit({commit},id){
       return new Promise((resolve, reject) => {
         axios({
           url:'/api/readunit/',
           method:'GET',
           params:{id:id}
         })
-        .then(resp=>resolve(resp))
+        .then(resp=>{
+            commit('emptyCommit')
+            resolve(resp)})
         .catch(err => {
               console.log(err)
               reject (err)})
