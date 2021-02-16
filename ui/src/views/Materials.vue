@@ -4,25 +4,6 @@
     max-width="1000"
     tile
   >
-        <v-list dense>
-          <v-subheader>МАТЕРИАЛЫ</v-subheader>
-          <v-list-item-group
-            color="primary"
-          >
-            <v-list-item
-              v-for="(item, i) in items"
-              :key="i"
-              @click.stop="openDialog(item.id)">
-       <!--       :to="'/unit/'+item.id"-->
-              <v-list-item-content v-text="item.id" ></v-list-item-content>
-              <v-list-item-content v-text="item.name" ></v-list-item-content>
-              <v-list-item-content v-text="item.recipe_unit_short_name" ></v-list-item-content>
-              <v-list-item-content v-text="item.price_unit_short_name" ></v-list-item-content>
-              <v-list-item-content v-text="item.coefficient"></v-list-item-content>
-
-            </v-list-item>
-          </v-list-item-group>
-        </v-list>  
 
       <v-data-table
         :headers="headers"

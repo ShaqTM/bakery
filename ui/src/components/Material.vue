@@ -1,6 +1,7 @@
 <template>
     <v-dialog
       v-model="this.content.dialog"
+      persistent
       max-width="500"
     >
        <v-card>
@@ -74,7 +75,7 @@
           <v-btn
             color="blue darken-1"
             text
-            @click="content.dialog = false"
+            @click="close()"
           >
             Закрыть
           </v-btn>
@@ -117,6 +118,9 @@
         this.$store.dispatch('writeMaterial',this.content)
         this.content.dialog= false
 
+      },
+      close(){
+        this.content.dialog = false
       }
     }
   }

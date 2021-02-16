@@ -1,6 +1,7 @@
 <template>
     <v-dialog
       v-model="this.content.editPrice"
+      persistent
       max-width="500"
     >
        <v-card>
