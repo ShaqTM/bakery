@@ -30,8 +30,12 @@ func GetRowQuerry(tableName string, id int) string {
 }
 
 //GetRowsQuerry Получение записей по имени таблицы
-func GetRowsQuerry(tableName string) string {
-	return `SELECT * FROM public.` + tableName + `;`
+func GetRowsQuerry(tableName string, params map[string]string) string {
+	orderString := ""
+	if params["order"] != "" {
+		orderString = ` ORDER BY ` + params["order"]
+	}
+	return `SELECT * FROM public.` + tableName + orderString + `;`
 }
 
 //GetOrderQuerry Получение заказа по id
@@ -110,7 +114,9 @@ func GetRecipeContentQuery(id int) string {
 //GetRecipeContentWithPricesQuery Получение таблицы рецепта по id
 func GetRecipeContentWithPricesQuery(id int) string {
 	return `
-	CREATE TEMP TABLE temp_materials AS
+	CREATE TEMP TABLE temp_materials 
+	ON COMMIT DROP
+		AS
 	SELECT 
 		recipes_content.material_id
 	FROM  
@@ -125,7 +131,9 @@ func GetRecipeContentWithPricesQuery(id int) string {
 			INNER JOIN temp_materials 
 			ON temp_materials.material_id = material_prices.material_id
 	GROUP BY material_prices.material_id;
-	CREATE TEMP TABLE prices AS
+	CREATE TEMP TABLE prices 
+	ON COMMIT DROP
+		AS
 	SELECT
 		material_prices.material_id,
 		material_prices.price
@@ -143,7 +151,7 @@ func GetRecipeContentWithPricesQuery(id int) string {
 		recipes_content.string_order,
 		units.name AS unit_name,
 		units.short_name AS unit_short_name,
-		ISNULL(prices.price,0) AS price,
+		COALESCE(prices.price,0) AS price,
 		materials.coefficient AS coefficient
 	FROM 
 		public.recipes_content AS recipes_content 
@@ -164,17 +172,19 @@ func GetRecipeContentWithPricesQuery(id int) string {
 //GetMaterialWithPricesQuery Получение материала с ценой id
 func GetMaterialWithPricesQuery(id int) string {
 	return `
-	CREATE TEMP TABLE price_periods AS
+	CREATE TEMP TABLE price_periods 
+	ON COMMIT DROP
+		AS
 	SELECT
 		material_prices.material_id,
 		MAX(material_prices.date) AS date
 	FROM 
 		public.material_prices AS material_prices
-			INNER JOIN temp_materials 
-			ON temp_materials.material_id = material_prices.material_id
-	GROUP BY material_prices.material_id
-	WHERE material_prices.material_id = ` + strconv.Itoa(id) + `;
-	CREATE TEMP TABLE prices AS
+	WHERE material_prices.material_id = ` + strconv.Itoa(id) + `
+	GROUP BY material_prices.material_id;
+	CREATE TEMP TABLE prices 
+	ON COMMIT DROP
+		AS
 	SELECT
 		material_prices.material_id,
 		material_prices.price
@@ -187,15 +197,14 @@ func GetMaterialWithPricesQuery(id int) string {
 	SELECT 
 		materials.id,
 		materials.name,
-		materials.recipes_content.qty,
 		materials.recipe_unit_id,
-		ISNULL(units1.name,'') AS recipe_unit_name,
-		ISNULL(units1.short_name,'') AS recipe_unit_short_name,
+		COALESCE(units1.name,'') AS recipe_unit_name,
+		COALESCE(units1.short_name,'') AS recipe_unit_short_name,
 		materials.price_unit_id,
-		ISNULL(units2.name,'') AS price_unit_name,
-		ISNULL(units2.short_name,'') AS price_unit_short_name,
+		COALESCE(units2.name,'') AS price_unit_name,
+		COALESCE(units2.short_name,'') AS price_unit_short_name,
 		materials.coefficient,
-		ISNULL(prices.price,0) AS price
+		COALESCE(prices.price,0) AS price
 	FROM 
 		public.materials AS materials 
 			LEFT JOIN public.units AS units1
@@ -215,16 +224,18 @@ func GetMaterialWithPricesQuery(id int) string {
 //GetMaterialsWithPricesQuery Получение списка материалов с ценой
 func GetMaterialsWithPricesQuery() string {
 	return `
-	CREATE TEMP TABLE price_periods AS
+	CREATE TEMP TABLE price_periods 
+	ON COMMIT DROP
+		AS
 	SELECT
 		material_prices.material_id,
 		MAX(material_prices.date) AS date
 	FROM 
 		public.material_prices AS material_prices
-			INNER JOIN temp_materials 
-			ON temp_materials.material_id = material_prices.material_id
-	GROUP BY material_prices.material_id
-	CREATE TEMP TABLE prices AS
+	GROUP BY material_prices.material_id;
+	CREATE TEMP TABLE prices 
+	ON COMMIT DROP
+		AS
 	SELECT
 		material_prices.material_id,
 		material_prices.price
@@ -237,15 +248,14 @@ func GetMaterialsWithPricesQuery() string {
 	SELECT 
 		materials.id,
 		materials.name,
-		materials.recipes_content.qty,
 		materials.recipe_unit_id,
-		ISNULL(units1.name,'') AS recipe_unit_name,
-		ISNULL(units1.short_name,'') AS recipe_unit_short_name,
+		COALESCE(units1.name,'') AS recipe_unit_name,
+		COALESCE(units1.short_name,'') AS recipe_unit_short_name,
 		materials.price_unit_id,
-		ISNULL(units2.name,'') AS price_unit_name,
-		ISNULL(units2.short_name,'') AS price_unit_short_name,
+		COALESCE(units2.name,'') AS price_unit_name,
+		COALESCE(units2.short_name,'') AS price_unit_short_name,
 		materials.coefficient,
-		ISNULL(prices.price,0) AS price
+		COALESCE(prices.price,0) AS price
 	FROM 
 		public.materials AS materials 
 			LEFT JOIN public.units AS units1
@@ -266,13 +276,12 @@ func GetMaterialQuery(id int) string {
 	SELECT 
 		materials.id,
 		materials.name,
-		materials.recipes_content.qty,
 		materials.recipe_unit_id,
-		ISNULL(units1.name,'') AS recipe_unit_name,
-		ISNULL(units1.short_name,'') AS recipe_unit_short_name,
+		COALESCE(units1.name,'') AS recipe_unit_name,
+		COALESCE(units1.short_name,'') AS recipe_unit_short_name,
 		materials.price_unit_id,
-		ISNULL(units2.name,'') AS price_unit_name,
-		ISNULL(units2.short_name,'') AS price_unit_short_name,
+		COALESCE(units2.name,'') AS price_unit_name,
+		COALESCE(units2.short_name,'') AS price_unit_short_name,
 		materials.coefficient
 	FROM 
 		public.materials AS materials 
@@ -294,13 +303,12 @@ func GetMaterialsQuery() string {
 	SELECT 
 		materials.id,
 		materials.name,
-		materials.recipes_content.qty,
 		materials.recipe_unit_id,
-		ISNULL(units1.name,'') AS recipe_unit_name,
-		ISNULL(units1.short_name,'') AS recipe_unit_short_name,
+		COALESCE(units1.name,'') AS recipe_unit_name,
+		COALESCE(units1.short_name,'') AS recipe_unit_short_name,
 		materials.price_unit_id,
-		ISNULL(units2.name,'') AS price_unit_name,
-		ISNULL(units2.short_name,'') AS price_unit_short_name,
+		COALESCE(units2.name,'') AS price_unit_name,
+		COALESCE(units2.short_name,'') AS price_unit_short_name,
 		materials.coefficient
 	FROM 
 		public.materials AS materials 

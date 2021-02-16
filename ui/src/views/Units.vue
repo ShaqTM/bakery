@@ -38,7 +38,7 @@
 </template>
  
 <script>
-import Unit from "../views/Unit"
+import Unit from "../components/Unit"
   export default {
     name: 'Units',
     components: {Unit},

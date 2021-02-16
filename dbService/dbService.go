@@ -15,6 +15,8 @@ type MDB struct {
 	Pdb **sql.DB
 }
 
+var numericCols = []string{"coefficient", "price", "output", "qty", "plan_qty", "plan_cost", "fact_qty", "fact_cost", "materials_cost", "cost"}
+
 const dbConnectString = "host=localhost port=5432 user=postgres password=qazplm dbname=bakery sslmode=disable"
 const dbConnectStringInit = "host=localhost port=5432 user=postgres password=qazplm dbname=postgres sslmode=disable"
 
@@ -61,7 +63,7 @@ func createDb(db *sql.DB) {
 }
 
 func updateDb(db *sql.DB) {
-	var dbVersion float32
+	var dbVersion int
 	dbVersion = -1
 	rows, err := db.Query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings'")
 	if err != nil {
@@ -76,6 +78,7 @@ func updateDb(db *sql.DB) {
 			name varchar(50) not null,
 			string_value varchar(200),
 			numeric_value numeric(15,3),
+			integer_Value integer,
 			time_value timestamp,
 			constraint name_data primary key (name));`)
 		if err != nil {
@@ -88,13 +91,13 @@ func updateDb(db *sql.DB) {
 	}
 
 }
-func getDbVersion(db *sql.DB) float32 {
-	rows, err := db.Query(`SELECT numeric_value FROM public.settings WHERE name = 'dbVersion'`)
+func getDbVersion(db *sql.DB) int {
+	rows, err := db.Query(`SELECT integer_Value FROM public.settings WHERE name = 'dbVersion'`)
 	if err != nil {
 		fmt.Println("Error inserting dbVersion data: ", err)
 		panic("Error inserting dbVersion data")
 	}
-	var version float32
+	var version int
 	version = -1
 	if rows.Next() {
 		err = rows.Scan(&version)
@@ -110,9 +113,9 @@ func setDbVersion(version float32, db *sql.DB) {
 	insertString := ""
 	if getDbVersion(db) == -1 {
 
-		insertString = `INSERT INTO public.settings(name, numeric_value) VALUES ($1,$2);`
+		insertString = `INSERT INTO public.settings(name, integer_Value) VALUES ($1,$2);`
 	} else {
-		insertString = `UPDATE public.settings SET numeric_value =$2 WHERE name = $1;`
+		insertString = `UPDATE public.settings SET integer_Value =$2 WHERE name = $1;`
 	}
 	_, err := db.Exec(insertString, "dbVersion", version)
 
@@ -187,6 +190,20 @@ func updateDbToVerion0(db *sql.DB) {
 	setDbVersion(0, db)
 
 }
+func convertIfNumeric(col string, value interface{}) interface{} {
+	for i := range numericCols {
+		if numericCols[i] == col {
+			res, err := strconv.ParseFloat(string(value.([]uint8)), 32)
+			if err != nil {
+				fmt.Println("Error parsing float:", value, err)
+				return value
+			}
+			return res
+
+		}
+	}
+	return value
+}
 
 //UpdateData Запись данных в таблицу
 func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) (int, error) {
@@ -225,6 +242,8 @@ func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) (int, e
 		err := db.QueryRow(`insert into public.`+tableName+`(`+namesString+`) VALUES(`+placeholdersString+`) RETURNING id;`, vals...).Scan(&lastInsertID)
 		if err != nil {
 			fmt.Println("Error inserting data: ", err)
+			fmt.Println(`insert into public.` + tableName + `(` + namesString + `) VALUES(` + placeholdersString + `) RETURNING id;`)
+			fmt.Println(vals)
 			return -1, err
 		}
 		return lastInsertID, nil
@@ -328,7 +347,7 @@ func (mdb MDB) ReadRow(queryText string) (map[string]interface{}, error) {
 
 	for i, colName := range cols {
 		val := columnPointers[i].(*interface{})
-		data[colName] = *val
+		data[colName] = convertIfNumeric(colName, *val)
 	}
 	return data, nil
 }
@@ -341,6 +360,7 @@ func (mdb MDB) ReadRows(queryText string) ([]map[string]interface{}, error) {
 	rows, err := db.Query(queryText) // Note: Ignoring errors for brevity
 	if err != nil {
 		fmt.Println("Error reading data: ", err)
+		fmt.Println(queryText)
 		return dataArray, err
 	}
 	cols, _ := rows.Columns()
@@ -358,7 +378,7 @@ func (mdb MDB) ReadRows(queryText string) ([]map[string]interface{}, error) {
 		data := make(map[string]interface{})
 		for i, colName := range cols {
 			val := columnPointers[i].(*interface{})
-			data[colName] = *val
+			data[colName] = convertIfNumeric(colName, *val)
 		}
 		dataArray = append(dataArray, data)
 	}
@@ -391,7 +411,9 @@ func (mdb MDB) ReadOrderContent(id int) ([]map[string]interface{}, error) {
 
 //ReadRecipesList Читает список рецептов
 func (mdb MDB) ReadRecipesList() ([]map[string]interface{}, error) {
-	return mdb.ReadRows(GetRowsQuerry("recipes"))
+	params := make(map[string]string)
+	params["order"] = "name"
+	return mdb.ReadRows(GetRowsQuerry("recipes", params))
 }
 
 //ReadRecipe Читает рецепт по id
@@ -420,7 +442,9 @@ func (mdb MDB) ReadRecipeContentWithPrice(id int) ([]map[string]interface{}, err
 
 //ReadUnits читает список единиц измерения
 func (mdb MDB) ReadUnits() ([]map[string]interface{}, error) {
-	return mdb.ReadRows(GetRowsQuerry("units"))
+	params := make(map[string]string)
+	params["order"] = "name"
+	return mdb.ReadRows(GetRowsQuerry("units", params))
 }
 
 //ReadMaterials читает список материалов
