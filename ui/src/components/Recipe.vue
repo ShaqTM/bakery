@@ -53,14 +53,17 @@
            </v-row>
            
           </v-container>
-        </v-card-text>
+      </v-card-text>
+  
      <v-data-table
+        dense
         :headers="headers"
         :items="content.content"
         class="elevation-1"
       >
         <template v-slot:[`item.material_id`]="{ item }">
           <v-select
+            dense
             v-model="item.material_id"
             :items="materials"
             item-text="name"
@@ -71,6 +74,7 @@
         </template>      
         <template v-slot:[`item.qty`]="{ item }">
          <v-text-field
+          dense
             v-model.number="item.qty"
             :rules="[rules.num]"            
             required
@@ -79,22 +83,16 @@
 
 
       </v-data-table>
+      <div class="text-center pt-2">
+        <v-btn
+          color="primary"
+          @click="AddMaterial()"
+        >
+          +
+        </v-btn>
+      </div>
 
-        <v-fab-transition>
-          <v-btn
-            color="pink"
-            dark
-            absolute
-            bottom
-            right
-            fab
-            @click.stop="AddMaterial()"
-          >
-            <v-icon>mdi-plus</v-icon>
-          </v-btn>
-          
-        </v-fab-transition>        
-        <v-card-actions>
+          <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
             color="blue darken-1"
