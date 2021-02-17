@@ -2,20 +2,28 @@ package store
 
 import "strconv"
 
-//ReadRecipesList Читает список рецептов
-func (mdb MDB) ReadRecipesList() ([]map[string]interface{}, error) {
-	params := make(map[string]string)
-	params["order"] = "name"
-	return mdb.ReadRows(GetRowsQuerry("recipes", params))
+//ReadRecipes Читает список рецептов
+func (mdb MDB) ReadRecipes(prices bool) ([]map[string]interface{}, error) {
+	if prices {
+		return mdb.ReadRows(RecipesWithPricesQuery)
+	}
+	return mdb.ReadRows(RecipesQuery)
 }
 
 //ReadRecipe Читает рецепт по id
-func (mdb MDB) ReadRecipe(id int) (map[string]interface{}, error) {
-	data, err := mdb.ReadRow(GetRowQuerry("recipes", id))
+func (mdb MDB) ReadRecipe(prices bool, id int) (map[string]interface{}, error) {
+	queryText := ""
+	if prices {
+		queryText = GetRecipeWithPriceQuerry(id)
+	} else {
+		queryText = GetRecipeQuerry(id)
+	}
+	data, err := mdb.ReadRow(queryText)
 	if err != nil {
 		return data, err
 	}
-	content, err := mdb.ReadRecipeContent(id)
+
+	content, err := mdb.ReadRecipeContent(prices, id)
 	if err != nil {
 		return data, err
 	}
@@ -24,13 +32,11 @@ func (mdb MDB) ReadRecipe(id int) (map[string]interface{}, error) {
 }
 
 //ReadRecipeContent Читает табличную часть рецепта по id
-func (mdb MDB) ReadRecipeContent(id int) ([]map[string]interface{}, error) {
+func (mdb MDB) ReadRecipeContent(prices bool, id int) ([]map[string]interface{}, error) {
+	if prices {
+		return mdb.ReadRows(GetRecipeContentWithPricesQuery(id))
+	}
 	return mdb.ReadRows(GetRecipeContentQuery(id))
-}
-
-//ReadRecipeContentWithPrice Читает табличную часть рецепта с ценами по id
-func (mdb MDB) ReadRecipeContentWithPrice(id int) ([]map[string]interface{}, error) {
-	return mdb.ReadRows(GetRecipeContentWithPricesQuery(id))
 }
 
 //RecipesQuery Текст запроса для получения списка рецептов
@@ -47,7 +53,47 @@ const RecipesQuery = `
 			ON recipes.unit_id = units.id
 	
 	ORDER BY 
-	recipes.id;`
+	recipes.name;`
+
+//RecipesWithPricesQuery Текст запроса для получения списка рецептов с ценами
+const RecipesWithPricesQuery = `
+	CREATE TEMP TABLE price_periods 
+	ON COMMIT DROP
+		AS
+	SELECT
+		recipe_prices.recipe_id,
+		MAX(recipe_prices.date) AS date
+	FROM 
+		public.recipe_prices AS recipe_prices
+	GROUP BY recipe_prices.recipe_id;
+	CREATE TEMP TABLE prices 
+	ON COMMIT DROP
+		AS
+	SELECT
+		recipe_prices.recipe_id,
+		recipe_prices.price
+	FROM 
+		public.recipe_prices AS recipe_prices
+		INNER JOIN price_periods 
+			ON price_periods.recipe_id = recipe_prices.recipe_id
+			AND price_periods.date = recipe_prices.date;
+	SELECT 
+		recipes.id,
+		recipes.name,
+		recipes.output,
+		recipes.unit_id,
+		units.short_name AS unit_short_name,
+		COALESCE(prices.price,0) AS price
+
+	FROM 
+		public.recipes AS recipes 
+			LEFT JOIN public.units AS units 
+			ON recipes.unit_id = units.id
+				LEFT JOIN prices 
+				ON 	recipes.id = prices.recipe_id
+	
+	ORDER BY 
+		recipes.name;`
 
 //GetRecipeQuerry Получение рецепта по id
 func GetRecipeQuerry(id int) string {
@@ -67,6 +113,49 @@ func GetRecipeQuerry(id int) string {
 		recipes.id = ` + strconv.Itoa(id) + `;`
 }
 
+//GetRecipeWithPriceQuerry Получение рецепта c ценой по id
+func GetRecipeWithPriceQuerry(id int) string {
+	return `
+	CREATE TEMP TABLE price_periods 
+	ON COMMIT DROP
+		AS
+	SELECT
+		recipe_prices.recipe_id,
+		MAX(recipe_prices.date) AS date
+	FROM 
+		public.recipe_prices AS recipe_prices
+	WHERE 
+	recipe_prices.recipe_id = ` + strconv.Itoa(id) + `
+	GROUP BY recipe_prices.recipe_id;
+	CREATE TEMP TABLE prices 
+	ON COMMIT DROP
+		AS
+	SELECT
+		recipe_prices.recipe_id,
+		recipe_prices.price
+	FROM 
+		public.recipe_prices AS recipe_prices
+		INNER JOIN price_periods 
+			ON price_periods.recipe_id = recipe_prices.recipe_id
+			AND price_periods.date = recipe_prices.date;
+	SELECT 
+		recipes.id,
+		recipes.name,
+		recipes.output,
+		recipes.unit_id,
+		units.short_name AS unit_short_name,
+		COALESCE(prices.price,0) AS price
+	FROM 
+		public.recipes AS recipes 
+			LEFT JOIN public.units AS units 
+			ON recipes.unit_id = units.id
+				LEFT JOIN prices 
+				ON 	recipes.id = prices.recipe_id			
+		
+	WHERE 
+		recipes.id = ` + strconv.Itoa(id) + `;`
+}
+
 //GetRecipeContentQuery Получение таблицы рецепта по id
 func GetRecipeContentQuery(id int) string {
 	return `
@@ -76,6 +165,7 @@ func GetRecipeContentQuery(id int) string {
 		materials.name AS material_name,
 		recipes_content.qty,
 		recipes_content.string_order,
+		materials.recipe_unit_id AS unit_id,
 		units.name AS unit_name,
 		units.short_name AS unit_short_name
 	FROM 
@@ -102,7 +192,9 @@ func GetRecipeContentWithPricesQuery(id int) string {
 	FROM  
 		public.recipes_content AS recipes_content
 	WHERE recipes_content.id = ` + strconv.Itoa(id) + `;
-	CREATE TEMP TABLE price_periods AS
+	CREATE TEMP TABLE price_periods 
+	ON COMMIT DROP
+	AS
 	SELECT
 		material_prices.material_id,
 		MAX(material_prices.date) AS date
@@ -129,6 +221,7 @@ func GetRecipeContentWithPricesQuery(id int) string {
 		materials.name AS material_name,
 		recipes_content.qty,
 		recipes_content.string_order,
+		materials.recipe_unit_id AS unit_id,
 		units.name AS unit_name,
 		units.short_name AS unit_short_name,
 		COALESCE(prices.price,0) AS price,

@@ -17,6 +17,7 @@ var numericCols = []string{"coefficient", "price", "output", "qty", "plan_qty", 
 func convertIfNumeric(col string, value interface{}) interface{} {
 	for i := range numericCols {
 		if numericCols[i] == col {
+			//			fmt.Println(col)
 			res, err := strconv.ParseFloat(string(value.([]uint8)), 64)
 
 			if err != nil {
@@ -97,7 +98,7 @@ func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) (int, e
 }
 
 //UpdateTableData Обновляет данные в табличной части
-func (mdb MDB) UpdateTableData(tableName string, data []map[string]interface{}, id int) error {
+func (mdb MDB) UpdateTableData(tableName string, data []interface{}, id int) error {
 	db := *mdb.Pdb
 	rows, err := db.Query(`SELECT * FROM ` + tableName + ` WHERE false`)
 	if err != nil {
@@ -118,7 +119,7 @@ func (mdb MDB) UpdateTableData(tableName string, data []map[string]interface{}, 
 	placeholdersString := ""
 	valueIndex := 1
 	for _, col := range cols {
-		if data[0][col] == nil {
+		if (data[0].(map[string]interface{}))[col] == nil {
 			continue
 		}
 		namesString += (col + ",")
@@ -135,10 +136,10 @@ func (mdb MDB) UpdateTableData(tableName string, data []map[string]interface{}, 
 	for _, item := range data {
 		vals := []interface{}{}
 		for _, col := range cols {
-			if item[col] == nil {
+			if item.(map[string]interface{})[col] == nil {
 				continue
 			}
-			vals = append(vals, item[col])
+			vals = append(vals, item.(map[string]interface{})[col])
 		}
 		_, err := stmt.Exec(vals...)
 		if err != nil {

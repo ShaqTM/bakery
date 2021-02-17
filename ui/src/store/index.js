@@ -8,7 +8,8 @@ export default new Vuex.Store({
   state: {
     count: 0,
     units:[],
-    materials:[]
+    materials:[],
+    recipes:[]
 //    units:[{id:1,name:"Штука",short_name:"шт."},
 //            {id:2,name:"Килограмм",short_name:"кг."},
 //        {id:3,name:"Литр",short_name:"л."}
@@ -21,9 +22,17 @@ export default new Vuex.Store({
     },
     getMaterials:state=>{
       return state.materials
+    },
+    getRecipes:state=>{
+      return state.recipes
+    },
+    getMaterial:state=>id=>{
+      return state.materials.find(material => material.id === id);
+    },
+
+    getUnit:state=>id=>{
+      return state.units.find(unit => unit.id === id);
     }
-
-
   },
   mutations: {
     updateUnits(state,resp){
@@ -31,7 +40,10 @@ export default new Vuex.Store({
     },
     updateMaterials(state,resp){
       state.materials = resp.data
-    },    
+    },  
+    updateRecipes(state,resp){
+      state.recipes = resp.data
+    },        
     emptyCommit(){
         
     }
@@ -113,10 +125,10 @@ export default new Vuex.Store({
               reject (err)})
       })
     },
-    //Price
-    writePrice({dispatch},priceData){
+    //Material Price
+    writeMaterialPrice({dispatch},priceData){
       axios({
-        url:'/api/writeprice',
+        url:'/api/writematerialprice',
         data:priceData,
         method:'POST'
       })
@@ -124,5 +136,50 @@ export default new Vuex.Store({
       .catch(error => console.log(error))
     },
 
+    //Recipes
+    writeRecipe({dispatch},recipeData){
+      axios({
+        url:'/api/writerecipe',
+        data:recipeData,
+        method:'POST'
+      })
+      .then(()=>dispatch('readRecipes',true))
+      .catch(error => console.log(error))
+    },
+    readRecipes({commit},price){
+      axios({
+        url:'/api/readrecipes',
+        method:'GET',
+        params:{price:price}
+      })
+      .then(resp=>commit('updateRecipes',resp))
+      .catch(err => console.log(err))
+    },
+
+    readRecipe({commit},params){
+      return new Promise((resolve, reject) => {
+        axios({
+          url:'/api/readrecipe/',
+          method:'GET',
+          params:params
+        })
+        .then(resp=>{
+            commit('emptyCommit')
+            resolve(resp)})
+        .catch(err => {
+              console.log(err)
+              reject (err)})
+      })
+    },
+    //Recipe Price
+    writeRecipePrice({dispatch},priceData){
+      axios({
+        url:'/api/writerecipeprice',
+        data:priceData,
+        method:'POST'
+      })
+      .then(()=>dispatch('readRecipes',true))
+      .catch(error => console.log(error))
+    },
   }
 })

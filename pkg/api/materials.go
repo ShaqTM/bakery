@@ -17,7 +17,7 @@ func AddMaterialsRoutes(router **mux.Router, mdb store.MDB) {
 	(*router).Handle("/api/readmaterials", readMaterials(mdb)).Methods("GET", "OPTIONS")
 	(*router).Handle("/api/readmaterial/", readMaterial(mdb)).Methods("GET", "OPTIONS")
 
-	(*router).Handle("/api/writeprice", writePrice(mdb)).Methods("POST", "OPTIONS")
+	(*router).Handle("/api/writematerialprice", writeMaterialPrice(mdb)).Methods("POST", "OPTIONS")
 }
 
 func writeMaterial(mdb store.MDB) http.Handler {
@@ -119,7 +119,7 @@ func readMaterial(mdb store.MDB) http.Handler {
 	})
 }
 
-func writePrice(mdb store.MDB) http.Handler {
+func writeMaterialPrice(mdb store.MDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "POST" {
 		//			sendAnswer405(w, "bad method")

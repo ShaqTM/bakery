@@ -45,21 +45,21 @@
           </v-btn>
           
         </v-fab-transition>
-        <Material v-bind:content="mdata"/>
-        <MaterialPrice v-bind:content="mdata"/>
+        <Recipe v-bind:content="mdata"/>
+        <RecipePrice v-bind:content="mdata"/>
     </v-card> 
 </template>
  
 <script>
-import Material from "../components/Material"
-import MaterialPrice from "../components/MaterialPrice"
+import Recipe from "../components/Recipe"
+import RecipePrice from "../components/RecipePrice"
 import { mdiCurrencyUsd } from '@mdi/js';
   export default {
-    name: 'Materials',
-    components: {Material,MaterialPrice},
+    name: 'Recipes',
+    components: {Recipe,RecipePrice},
     computed:{
       items(){
-        return this.$store.getters.getMaterials;
+        return this.$store.getters.getRecipes;
       }
     },
     data(){
@@ -68,13 +68,10 @@ import { mdiCurrencyUsd } from '@mdi/js';
       editPrice:false,
       id:-1,
       name:"",
-      recipe_unit_id:-1,
-      recipe_unit_name:"",
-      recipe_unit_short_name:"",
-      pricet_id:-1,
-      price_name:"",
-      price_unit_short_name:"",
-      coefficient:1}
+      unit_id:-1,
+      unit_short_name:"",
+      output:0,
+      content:[]}
       var headers= [
           {
             text: 'Наименование',
@@ -82,9 +79,8 @@ import { mdiCurrencyUsd } from '@mdi/js';
             sortable: true,
             value: 'name',
           },
-          { text: 'Ед. рецепта', value: 'recipe_unit_short_name' },
-          { text: 'Ед. цены', value: 'price_unit_short_name' },
-          { text: 'Коэф. пересчета', value: 'coefficient' },
+          { text: 'Выход', value: 'output' },
+          { text: 'Ед. изм', value: 'unit_short_name' },
           { text: 'Цена', value: 'price' },
           { text: '--------', value: 'actions', sortable: false },
 
@@ -95,7 +91,7 @@ import { mdiCurrencyUsd } from '@mdi/js';
       return {mdata:mdata,headers:headers,icons:icons}
     },
     created() {
-      this.$store.dispatch('readMaterials',true)
+      this.$store.dispatch('readRecipes',true)
     },
     methods:{
       openDialog(id){
@@ -105,15 +101,12 @@ import { mdiCurrencyUsd } from '@mdi/js';
             editPrice:false,
             id:-1,
             name:"",
-            recipe_unit_id:-1,
-            recipe_unit_name:"",
-            recipe_unit_short_name:"",
-            price_unit_id:-1,
-            price_unit_name:"",
-            price_unit_short_name:"",
-            coefficient:1}   
+            unit_id:-1,
+            unit_short_name:"",
+            output:0,
+            content:[]}   
         }else{
-          this.$store.dispatch('readMaterial', {id:id,price:false})
+          this.$store.dispatch('readRecipe', {id:id,price:false})
             .then(resp=>{
               resp.data['dialog']=true        
               this.mdata = resp.data
@@ -122,7 +115,7 @@ import { mdiCurrencyUsd } from '@mdi/js';
         }
       },
       editPrice(id){
-        this.$store.dispatch('readMaterial', {id:id,price:true})
+        this.$store.dispatch('readRecipe', {id:id,price:true})
           .then(resp=>{
             resp.data['dialog']=false
             resp.data['editPrice']=true

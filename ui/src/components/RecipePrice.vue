@@ -22,12 +22,23 @@
                 md="4"
               >
                 <v-text-field
-                  label="Ед. изм."
-                  required
+                  label="Выход"
                   readonly
-                  v-model="content.price_unit_short_name"
+                  v-model="content.output"
+                ></v-text-field>
+              </v-col>                
+              <v-col
+                cols="12"
+                sm="6"
+                md="4"
+              >
+                <v-text-field
+                  label="Ед. изм."
+                  readonly
+                  v-model="content.unit_short_name"
                 ></v-text-field>
               </v-col>
+           
               <v-col
                 cols="12"
                 sm="6"
@@ -66,7 +77,7 @@
  
 <script>
   export default {
-    name: 'Price',
+    name: 'RecipePrice',
     props:{content:Object
     },
     data(){
@@ -77,7 +88,7 @@
         if (isNaN(this.content.price)){
           return
         }
-        this.$store.dispatch('writePrice',{id:-1,material_id:this.content.id,price:this.content.price})
+        this.$store.dispatch('writeRecipePrice',{id:-1,recipe_id:this.content.id,price:this.content.price})
         this.content.editPrice= false
 
       }
