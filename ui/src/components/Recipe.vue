@@ -81,6 +81,30 @@
             ></v-text-field>          
         </template>      
 
+        <template v-slot:[`item.actions`]="{ item }">
+          <v-icon
+            small
+            class="mr-2"
+            @click="moveUp(item)"
+          >
+            {{ icons.mdiArrowUpThick  }}
+          </v-icon>
+          <v-icon
+            small
+            class="mr-2"
+            @click="moveDown(item)"
+          >
+            {{ icons.mdiArrowDownThick  }}
+          </v-icon> 
+          <v-icon
+            small
+            class="mr-2"
+            @click="deleteRow(item)"
+          >
+            {{ icons.mdiCloseThick   }}
+          </v-icon>                    
+        </template>      
+
 
       </v-data-table>
       <div class="text-center pt-2">
@@ -114,6 +138,9 @@
 </template>
  
 <script>
+  import { mdiArrowDownThick } from '@mdi/js';
+  import { mdiArrowUpThick } from '@mdi/js';
+  import { mdiCloseThick  } from '@mdi/js';
   export default {
     name: 'Recipe',
     props:{content:Object
@@ -141,11 +168,17 @@
       },
       { text: 'Количество', value: 'qty' },
       { text: 'Ед. изм', value: 'unit_short_name' },
-//      { text: '--------', value: 'actions', sortable: false },
+      { text: '--------', value: 'actions', sortable: false },
 
         ]
       var rules = {num: value => {return !isNaN(value)||'Должно быть число'}}
-      return {rules:rules,headers:headers}
+      var icons= {
+      mdiArrowDownThick,
+      mdiArrowUpThick,
+      mdiCloseThick 
+
+      }
+      return {rules:rules,headers:headers,icons:icons}
     },
 //    data(){
       
@@ -159,6 +192,10 @@
       saveData(){
         if (isNaN(this.content.output)){
           return
+        }        
+        var len = this.content.content.length
+        for(let i = 0 ; i < len; i++) {
+          this.content.content[i]["string_order"] = i
         }        
         this.$store.dispatch('writeRecipe',this.content)
         this.content.dialog= false
@@ -176,7 +213,59 @@
         var mUnit = this.$store.getters.getUnit(item.unit_id)
         item.unit_short_name = mUnit.short_name
 
-      }
+      },
+      moveUp(item){
+        var len = this.content.content.length
+        var mIndex
+        for(let i = 0 ; i < len; i++) {
+          if (this.content.content[i]["string_order"] === item.string_order) {
+            mIndex = i
+            break
+          }
+        }
+        if (mIndex===0){
+          return
+        }
+        this.content.content[mIndex]=this.content.content[mIndex-1]
+        this.content.content[mIndex-1] = item
+        for(let i = 0 ; i < len; i++) {
+          this.content.content[i]["string_order"] = i
+        }        
+      },
+      moveDown(item){
+        var len = this.content.content.length
+        var mIndex
+        for(let i = 0 ; i < len; i++) {
+          if (this.content.content[i]["string_order"] === item.string_order) {
+            mIndex = i
+            break
+          }
+        }
+        if (mIndex===len-1){
+          return
+        }
+        this.content.content[mIndex]=this.content.content[mIndex+1]
+        this.content.content[mIndex+1] = item
+        for(let i = 0 ; i < len; i++) {
+          this.content.content[i]["string_order"] = i
+        }
+      } ,
+      deleteRow(item){
+        var len = this.content.content.length
+        var mIndex
+        for(let i = 0 ; i < len; i++) {
+          if (this.content.content[i]["string_order"] === item.string_order) {
+            mIndex = i
+            break
+          }
+        }
+        this.content.content.splice(mIndex)
+        len = this.content.content.length
+        for(let i = 0 ; i < len; i++) {
+          this.content.content[i]["string_order"] = i
+        }
+      }           
+
     }
   }
 </script>
