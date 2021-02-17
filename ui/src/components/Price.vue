@@ -9,6 +9,11 @@
           <span class="headline">Цена</span>
         </v-card-title>
         <v-card-text>
+          <v-text-field
+            label="Наименование"
+            v-model="content.name"
+            readonly
+          ></v-text-field>  
           <v-container>
             <v-row>
               <v-col
@@ -17,9 +22,10 @@
                 md="4"
               >
                 <v-text-field
-                  label="Наименование"
+                  label="Ед. изм."
                   required
-                  v-model="content.name"
+                  readonly
+                  v-model="content.price_unit_short_name"
                 ></v-text-field>
               </v-col>
               <v-col
@@ -30,7 +36,8 @@
                 <v-text-field
                   label="Цена"
                   required
-                  v-model="content.price"
+                  v-model.number="content.price"
+                  :rules="[rules.num]"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -41,7 +48,7 @@
           <v-btn
             color="blue darken-1"
             text
-            @click="content.dialog = false"
+            @click="content.editPrice = false"
           >
             Закрыть
           </v-btn>
@@ -62,9 +69,14 @@
     name: 'Price',
     props:{content:Object
     },
-
+    data(){
+      return {rules:{num: value => {return !isNaN(value)||'Должно быть число'}}}
+    },
     methods:{
       saveData(){
+        if (isNaN(this.content.price)){
+          return
+        }
         this.$store.dispatch('writePrice',{id:-1,material_id:this.content.id,price:this.content.price})
         this.content.editPrice= false
 

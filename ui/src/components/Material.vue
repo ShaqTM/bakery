@@ -35,7 +35,6 @@
                   item-text="short_name"
                   item-value="id"
                   label="Ед. изм. цены"
-                  single-line
                   required
                 ></v-select>
               </v-col>
@@ -50,7 +49,6 @@
                   item-text="short_name"
                   item-value="id"
                   label="Ед. изм. рецепта"
-                  single-line
                   required
                 ></v-select>
               </v-col>
@@ -62,7 +60,8 @@
                 <v-text-field
                   label="Коэфф. пересчета"
                   required
-                  v-model="content.coefficient"
+                  v-model.number="content.coefficient"
+                  :rules="[rules.num]"
                 ></v-text-field>
               </v-col>
                
@@ -104,7 +103,9 @@
     created() {
       this.$store.dispatch('readUnits')
     },    
-
+    data(){
+      return {rules:{num: value => {return !isNaN(value)||'Должно быть число'}}}
+    },
 //    data(){
       
 //        if (this.content.id==-1) {
@@ -115,6 +116,9 @@
 //    },
     methods:{
       saveData(){
+        if (isNaN(this.content.coefficient)){
+          return
+        }        
         this.$store.dispatch('writeMaterial',this.content)
         this.content.dialog= false
 
