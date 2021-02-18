@@ -226,8 +226,9 @@
         if (mIndex===0){
           return
         }
-        this.content.content[mIndex]=this.content.content[mIndex-1]
-        this.content.content[mIndex-1] = item
+
+        this.content.content.splice(mIndex, 1, this.content.content[mIndex-1])
+        this.content.content.splice([mIndex-1],1,item)
         for(let i = 0 ; i < len; i++) {
           this.content.content[i]["string_order"] = i
         }        
@@ -244,8 +245,8 @@
         if (mIndex===len-1){
           return
         }
-        this.content.content[mIndex]=this.content.content[mIndex+1]
-        this.content.content[mIndex+1] = item
+        this.content.content.splice(mIndex, 1, this.content.content[mIndex+1])
+        this.content.content.splice([mIndex+1],1,item)
         for(let i = 0 ; i < len; i++) {
           this.content.content[i]["string_order"] = i
         }
@@ -259,7 +260,7 @@
             break
           }
         }
-        this.content.content.splice(mIndex)
+        this.content.content.splice(mIndex,1)
         len = this.content.content.length
         for(let i = 0 ; i < len; i++) {
           this.content.content[i]["string_order"] = i
