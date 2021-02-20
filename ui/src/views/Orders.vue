@@ -30,7 +30,6 @@
 
 
       </v-data-table>
-
       <div class="text-center pt-2">
         <v-btn
           color="primary"
@@ -39,47 +38,47 @@
           +
         </v-btn>
       </div>
-        <Material v-bind:content="mdata"/>
-        <MaterialPrice v-bind:content="mdata"/>
+        <Order v-bind:content="mdata"/>
     </v-card> 
 </template>
  
 <script>
-import Material from "../components/Material"
-import MaterialPrice from "../components/MaterialPrice"
+import Order from "../components/Order"
 import { mdiCurrencyUsd } from '@mdi/js';
   export default {
-    name: 'Materials',
-    components: {Material,MaterialPrice},
+    name: 'Orders',
+    components: {OrderOrder},
     computed:{
       items(){
-        return this.$store.getters.getMaterials;
+        return this.$store.getters.getOrders;
       }
     },
     data(){
       var mdata = {
       dialog:false,
-      editPrice:false,
       id:-1,
       name:"",
-      recipe_unit_id:-1,
-      recipe_unit_name:"",
-      recipe_unit_short_name:"",
-      pricet_id:-1,
-      price_name:"",
-      price_unit_short_name:"",
-      coefficient:1}
+      unit_id:-1,
+      unit_short_name:"",
+      output:0,
+      content:[]}
       var headers= [
           {
-            text: 'Наименование',
+            text: 'Заказчик',
             align: 'start',
             sortable: true,
-            value: 'name',
+            value: 'customer',
           },
-          { text: 'Ед. рецепта', value: 'recipe_unit_short_name' },
-          { text: 'Ед. цены', value: 'price_unit_short_name' },
-          { text: 'Коэф. пересчета', value: 'coefficient' },
-          { text: 'Цена', value: 'price' },
+          { text: 'Рецепт', value: 'recipe_name'},
+          { text: 'Дата', value: 'date'},
+          { text: 'Дата выдачи', value: 'release_date'},
+          { text: 'Ед. изм', value: 'unit_name' },
+          { text: 'Количество план', value: 'plan_qty'},
+          { text: 'Цена', value: 'price'},
+          { text: 'Стоимость план', value: 'plan_cost'},
+          { text: 'Количество факт', value: 'fact_qty'},
+          { text: 'Стоимость факт', value: 'fact_cost'},
+          { text: 'Стоимость материалов', value: 'materials_cost'},
           { text: '--------', value: 'actions', sortable: false },
 
         ]
@@ -89,25 +88,21 @@ import { mdiCurrencyUsd } from '@mdi/js';
       return {mdata:mdata,headers:headers,icons:icons}
     },
     created() {
-      this.$store.dispatch('readMaterials',true)
+      this.$store.dispatch('readOrders')
     },
     methods:{
       openDialog(id){
         if (id==-1) {
           this.mdata = {
             dialog:true,
-            editPrice:false,
             id:-1,
             name:"",
-            recipe_unit_id:-1,
-            recipe_unit_name:"",
-            recipe_unit_short_name:"",
-            price_unit_id:-1,
-            price_unit_name:"",
-            price_unit_short_name:"",
-            coefficient:1}   
+            unit_id:-1,
+            unit_short_name:"",
+            output:0,
+            content:[]}   
         }else{
-          this.$store.dispatch('readMaterial', {id:id,price:false})
+          this.$store.dispatch('readOrder', {id:id})
             .then(resp=>{
               resp.data['dialog']=true        
               this.mdata = resp.data
@@ -116,10 +111,9 @@ import { mdiCurrencyUsd } from '@mdi/js';
         }
       },
       editPrice(id){
-        this.$store.dispatch('readMaterial', {id:id,price:true})
+        this.$store.dispatch('readOrder', {id:id})
           .then(resp=>{
             resp.data['dialog']=false
-            resp.data['editPrice']=true
             this.mdata = resp.data
             })
           .catch(err => console.log(err))

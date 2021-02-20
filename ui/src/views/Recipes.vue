@@ -30,21 +30,14 @@
 
 
       </v-data-table>
-
-        <v-fab-transition>
-          <v-btn
-            color="pink"
-            dark
-            absolute
-            bottom
-            right
-            fab
-            @click.stop="openDialog(-1)"
-          >
-            <v-icon>mdi-plus</v-icon>
-          </v-btn>
-          
-        </v-fab-transition>
+      <div class="text-center pt-2">
+        <v-btn
+          color="primary"
+          @click.stop="openDialog(-1)"
+        >
+          +
+        </v-btn>
+      </div>
         <Recipe v-bind:content="mdata"/>
         <RecipePrice v-bind:content="mdata"/>
     </v-card> 
