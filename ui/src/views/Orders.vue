@@ -80,7 +80,7 @@ import { mdiCurrencyUsd } from '@mdi/js';
           { text: 'Стоимость факт', value: 'fact_cost'},
           { text: 'Стоимость материалов', value: 'materials_cost'},
           { text: '--------', value: 'actions', sortable: false },
-
+ 
         ]
       var icons= {
       mdiCurrencyUsd
