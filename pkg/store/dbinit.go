@@ -77,6 +77,9 @@ func updateDb(db *sql.DB) {
 	if dbVersion < 0 {
 		updateDbToVerion0(db)
 	}
+	if dbVersion < 1 {
+		updateDbToVerion1(db)
+	}
 
 }
 func getDbVersion(db *sql.DB) int {
@@ -178,5 +181,18 @@ func updateDbToVerion0(db *sql.DB) {
 		panic("Error creating tables")
 	}
 	setDbVersion(0, db)
+
+}
+
+func updateDbToVerion1(db *sql.DB) {
+	initTableString := `
+	ALTER TABLE public.order_details ADD COLUMN by_recipe boolean;
+		 `
+	_, err := db.Exec(initTableString)
+	if err != nil {
+		fmt.Println("Error creating tables:", err)
+		panic("Error creating tables")
+	}
+	setDbVersion(1, db)
 
 }

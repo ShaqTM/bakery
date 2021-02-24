@@ -19,13 +19,7 @@
           >
             mdi-pencil
           </v-icon>
-          <v-icon
-            small
-            class="mr-2"
-            @click="editPrice(item.id)"
-          >
-            {{ icons.mdiCurrencyUsd }}
-          </v-icon>          
+     
         </template>      
 
 
@@ -44,7 +38,6 @@
  
 <script>
 import Order from "../components/Order"
-import { mdiCurrencyUsd } from '@mdi/js';
   export default {
     name: 'Orders',
     components: {OrderOrder},
@@ -57,10 +50,19 @@ import { mdiCurrencyUsd } from '@mdi/js';
       var mdata = {
       dialog:false,
       id:-1,
-      name:"",
-      unit_id:-1,
-      unit_short_name:"",
-      output:0,
+      customer:"",
+		  recipe_id:-1,
+      recipe_name:"",
+		  date:-1,
+		  release_date:-1,
+		  price:0,
+		  plan_qty:0,
+		  plan_cost:0,
+		  fact_qty:0,
+		  fact_cost:0,
+		  materials_cost:0,
+		  unit_id:-1,
+		  unit_short_name:"",
       content:[]}
       var headers= [
           {
@@ -82,10 +84,8 @@ import { mdiCurrencyUsd } from '@mdi/js';
           { text: '--------', value: 'actions', sortable: false },
  
         ]
-      var icons= {
-      mdiCurrencyUsd
-      }
-      return {mdata:mdata,headers:headers,icons:icons}
+
+      return {mdata:mdata,headers:headers}
     },
     created() {
       this.$store.dispatch('readOrders')
@@ -96,11 +96,20 @@ import { mdiCurrencyUsd } from '@mdi/js';
           this.mdata = {
             dialog:true,
             id:-1,
-            name:"",
-            unit_id:-1,
-            unit_short_name:"",
-            output:0,
-            content:[]}   
+          customer:"",
+    		  recipe_id:-1,
+          recipe_name:"",
+    		  date:-1,
+    		  release_date:-1,
+    		  price:0,
+		      plan_qty:0,
+  	  	  plan_cost:0,
+	  	    fact_qty:0,
+    		  fact_cost:0,
+	    	  materials_cost:0,
+		      unit_id:-1,
+  		    unit_short_name:"",
+          content:[]}   
         }else{
           this.$store.dispatch('readOrder', {id:id})
             .then(resp=>{
@@ -110,15 +119,7 @@ import { mdiCurrencyUsd } from '@mdi/js';
             .catch(err => console.log(err))
         }
       },
-      editPrice(id){
-        this.$store.dispatch('readOrder', {id:id})
-          .then(resp=>{
-            resp.data['dialog']=false
-            this.mdata = resp.data
-            })
-          .catch(err => console.log(err))
-      }
-           
+          
     }
   }
 </script>

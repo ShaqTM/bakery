@@ -125,6 +125,7 @@ export default new Vuex.Store({
               reject (err)})
       })
     },
+    
     //Material Price
     writeMaterialPrice({dispatch},priceData){
       axios({

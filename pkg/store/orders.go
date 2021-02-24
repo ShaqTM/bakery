@@ -60,7 +60,7 @@ func GetOrderQuerry(id int) string {
 		orders.id,
 		orders.customer,
 		orders.recipe_id,
-		recipes.name,
+		recipes.name AS recipe_name,
 		orders.date,
 		orders.release_date,
 		orders.price,
@@ -93,7 +93,8 @@ func GetOrderContentQuerry(id int) string {
 		order_details.price,
 		order_details.cost,
 		units.name AS unit_name,
-		units.short_name AS unit_short_name
+		units.short_name AS unit_short_name,
+		by_recipe
 	FROM  
 		public.order_details AS order_details 
 	 		LEFT JOIN public.materials AS materials 
