@@ -40,7 +40,7 @@
 import Order from "../components/Order"
   export default {
     name: 'Orders',
-    components: {OrderOrder},
+    components: {Order},
     computed:{
       items(){
         return this.$store.getters.getOrders;
@@ -51,18 +51,18 @@ import Order from "../components/Order"
       dialog:false,
       id:-1,
       customer:"",
-		  recipe_id:-1,
+      recipe_id:-1,
       recipe_name:"",
-		  date:-1,
-		  release_date:-1,
-		  price:0,
-		  plan_qty:0,
-		  plan_cost:0,
-		  fact_qty:0,
-		  fact_cost:0,
-		  materials_cost:0,
-		  unit_id:-1,
-		  unit_short_name:"",
+      date:-1,
+      release_date:-1,
+      price:0,
+      plan_qty:0,
+      plan_cost:0,
+      fact_qty:0,
+      fact_cost:0,
+      materials_cost:0,
+      unit_id:-1,
+      unit_short_name:"",
       content:[]}
       var headers= [
           {
@@ -97,18 +97,18 @@ import Order from "../components/Order"
             dialog:true,
             id:-1,
           customer:"",
-    		  recipe_id:-1,
+          recipe_id:-1,
           recipe_name:"",
-    		  date:-1,
-    		  release_date:-1,
-    		  price:0,
-		      plan_qty:0,
-  	  	  plan_cost:0,
-	  	    fact_qty:0,
-    		  fact_cost:0,
-	    	  materials_cost:0,
-		      unit_id:-1,
-  		    unit_short_name:"",
+          date:-1,
+          release_date:-1,
+          price:0,
+          plan_qty:0,
+          plan_cost:0,
+          fact_qty:0,
+          fact_cost:0,
+          materials_cost:0,
+          unit_id:-1,
+          unit_short_name:"",
           content:[]}   
         }else{
           this.$store.dispatch('readOrder', {id:id})

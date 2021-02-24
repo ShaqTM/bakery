@@ -285,12 +285,15 @@
       },
       materials(){
         return this.$store.getters.getMaterials;
+      },
+      recipes(){
+        return this.$store.getters.getRecipes;
       }
-
     },
     created() {
       this.$store.dispatch('readUnits')
       this.$store.dispatch('readMaterials',true)
+      this.$store.dispatch('readRecipes',true)
     },    
     data(){
       var headers= [
@@ -326,14 +329,17 @@
 //        return  this.$store.getters.getUnit(this.content.id);
 //    },
     methods:{
+      updateTableOrder(){
+        var len = this.content.content.length        
+        for(let i = 0 ; i < len; i++) {
+          this.content.content[i]["string_order"] = i
+        }         
+      },
       saveData(){
         if (isNaN(this.content.output)){
           return
         }        
-        var len = this.content.content.length
-        for(let i = 0 ; i < len; i++) {
-          this.content.content[i]["string_order"] = i
-        }        
+        this.updateTableOrder()       
         this.$store.dispatch('writeOrder',this.content)
         this.content.dialog= false
 
@@ -341,6 +347,7 @@
       close(){
         this.content.dialog = false
       },
+
       AddMaterial(){
         this.content.content.push({id:this.content.id,material_id:-1,qty:0,price:0,cost:0,unit_id:-1,string_order:this.content.content.length,by_recipe:false})
       },
@@ -350,8 +357,8 @@
         var mUnit = this.$store.getters.getUnit(item.unit_id)
         item.unit_short_name = mUnit.short_name
         item.price = mMaterial.price
-        item.cost = item/price*item.qty
-        countMaterialCost()
+        item.cost = item.price*item.qty
+        this.countMaterialCost()
 
       },
       moveUp(item){
@@ -369,9 +376,8 @@
 
         this.content.content.splice(mIndex, 1, this.content.content[mIndex-1])
         this.content.content.splice([mIndex-1],1,item)
-        for(let i = 0 ; i < len; i++) {
-          this.content.content[i]["string_order"] = i
-        }        
+        this.updateTableOrder()
+       
       },
       moveDown(item){
         var len = this.content.content.length
@@ -387,9 +393,7 @@
         }
         this.content.content.splice(mIndex, 1, this.content.content[mIndex+1])
         this.content.content.splice([mIndex+1],1,item)
-        for(let i = 0 ; i < len; i++) {
-          this.content.content[i]["string_order"] = i
-        }
+        this.updateTableOrder()
       } ,
       deleteRow(item){
         var len = this.content.content.length
@@ -401,10 +405,7 @@
           }
         }
         this.content.content.splice(mIndex,1)
-        len = this.content.content.length
-        for(let i = 0 ; i < len; i++) {
-          this.content.content[i]["string_order"] = i
-        }
+        this.updateTableOrder()
       },
       countMaterialCost(){
         var mMaterialCost = 0
@@ -414,38 +415,65 @@
         } 
         this.content.materials_cost = mMaterialCost       
       },
-      materialQtyCHanged(item){
+      materialQtyChanged(item){
         item.cost=item.qty*item.price
-        countMaterialCost()
+        this.countMaterialCost()
       },
       materialPriceChanged(item){
         item.cost=item.qty*item.price
-        countMaterialCost()
+        this.countMaterialCost()
       },
       recipeChanged(){
         var len = this.content.content.length
         for(let i = 0 ; i < len; ) {
           if (this.content.content[i]["by_recipe"]===true){
-            this.content.content.splice(mIndex, 1)
+            this.content.content.splice(i, 1)
             len--
           }else{
             i++
           }
         }
-        this.$store.dispatch('readRecipe', {id:id,price:true})
+        this.$store.dispatch('readRecipe', {id:this.content.recipe_id,price:true})
           .then(resp=>{
             var len = resp.data.content.length
             for(let i = 0 ; i < len; i++) {
               this.content.content.splice(i, 0,resp.data.content[i])
             }
+            for(let i = 0 ; i < len; i++) {
+              this.content.content[i].cost = this.content.content[i].price*this.content.content[i].qty
+            }
+
+            this.updateTableOrder()
+            this.countMaterialCost()
+            this.content.price = resp.data.price
+            this.content.unit_short_name = resp.data.unit_short_name
+            this.content.unit_id = resp.data.unit_id
+
           })         
           .catch(err => console.log(err))
+      },
+      priceChanged(){
+        this.content.plan_cost = this.content.price*this.content.plan_qty
+        this.content.fact_cost = this.content.price*this.content.fact_qty
+      },
+      planQtyChanged(){
+        this.content.plan_cost = this.content.price*this.content.plan_qty
+      },
+      planCostChanged(){
+        if (!this.content.plan_qty===0){
+          this.content.price = Math.round(this.content.plan_cost/this.content.plan_qty*100)/100
+          this.content.fact_cost = this.content.price*this.content.fact_qty
+        }
+      },
+      factQtyChanged(){
+        this.content.fact_cost = this.content.price*this.content.fact_qty
+      },
+      factCostChanged(){
+        if (!this.content.fact_qty===0){
+          this.content.price = Math.round(this.content.fact_cost/this.content.fact_qty*100)/100
+          this.content.plan_cost = this.content.price*this.content.plan_qty
+        }
       }
-      @change="priceChanged(item)"
-      @change="planQtyChanged(item)"
-      @change="planCostChanged(item)"
-      @change="factCostChanged(item)"
-      @change="factQtyChanged(item)"
     }
   }
 </script>

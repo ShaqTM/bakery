@@ -9,7 +9,8 @@ export default new Vuex.Store({
     count: 0,
     units:[],
     materials:[],
-    recipes:[]
+    recipes:[],
+    orders:[]
 //    units:[{id:1,name:"Штука",short_name:"шт."},
 //            {id:2,name:"Килограмм",short_name:"кг."},
 //        {id:3,name:"Литр",short_name:"л."}
@@ -26,6 +27,9 @@ export default new Vuex.Store({
     getRecipes:state=>{
       return state.recipes
     },
+    getOrderss:state=>{
+      return state.orders
+    },    
     getMaterial:state=>id=>{
       return state.materials.find(material => material.id === id);
     },
@@ -43,7 +47,10 @@ export default new Vuex.Store({
     },  
     updateRecipes(state,resp){
       state.recipes = resp.data
-    },        
+    },  
+    updateOrders(state,resp){
+      state.orders = resp.data
+    },            
     emptyCommit(){
         
     }
@@ -182,5 +189,39 @@ export default new Vuex.Store({
       .then(()=>dispatch('readRecipes',true))
       .catch(error => console.log(error))
     },
+    //Orders
+    writeOrder({dispatch},orderData){
+      axios({
+        url:'/api/writeorder',
+        data:orderData,
+        method:'POST'
+      })
+      .then(()=>dispatch('readOrders',true))
+      .catch(error => console.log(error))
+    },
+    readOrders({commit}){
+      axios({
+        url:'/api/readorders',
+        method:'GET',
+      })
+      .then(resp=>commit('updateOrders',resp))
+      .catch(err => console.log(err))
+    },
+
+    readOrder({commit},params){
+      return new Promise((resolve, reject) => {
+        axios({
+          url:'/api/readorder/',
+          method:'GET',
+          params:params
+        })
+        .then(resp=>{
+            commit('emptyCommit')
+            resolve(resp)})
+        .catch(err => {
+              console.log(err)
+              reject (err)})
+      })
+    },    
   }
 })

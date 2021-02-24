@@ -2,8 +2,8 @@ package store
 
 import "strconv"
 
-//ReadOrderList Читает список заказов
-func (mdb MDB) ReadOrderList() ([]map[string]interface{}, error) {
+//ReadOrders Читает список заказов
+func (mdb MDB) ReadOrders() ([]map[string]interface{}, error) {
 	return mdb.ReadRows(OrdersQuery)
 }
 

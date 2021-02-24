@@ -103,12 +103,12 @@ func readMaterial(mdb store.MDB) http.Handler {
 			sendAnswer400(w, err.Error())
 			return
 		}
-		unit, err := mdb.ReadMaterial(withPrice, id)
+		material, err := mdb.ReadMaterial(withPrice, id)
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
 		}
-		jsonText, err := json.Marshal(unit)
+		jsonText, err := json.Marshal(material)
 		if err != nil {
 			fmt.Println("error reading querry:", err)
 			sendAnswer400(w, err.Error())

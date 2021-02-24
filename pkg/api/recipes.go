@@ -106,12 +106,12 @@ func readRecipe(mdb store.MDB) http.Handler {
 			sendAnswer400(w, err.Error())
 			return
 		}
-		unit, err := mdb.ReadRecipe(withPrice, id)
+		recipe, err := mdb.ReadRecipe(withPrice, id)
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
 		}
-		jsonText, err := json.Marshal(unit)
+		jsonText, err := json.Marshal(recipe)
 		if err != nil {
 			fmt.Println("error reading querry:", err)
 			sendAnswer400(w, err.Error())
