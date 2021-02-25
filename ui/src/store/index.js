@@ -27,7 +27,7 @@ export default new Vuex.Store({
     getRecipes:state=>{
       return state.recipes
     },
-    getOrderss:state=>{
+    getOrders:state=>{
       return state.orders
     },    
     getMaterial:state=>id=>{
@@ -49,8 +49,22 @@ export default new Vuex.Store({
       state.recipes = resp.data
     },  
     updateOrders(state,resp){
+      for (let i = 0;i<resp.data.length;i++){
+        resp.data[i].date = resp.data[i].date.substr(0, 10)
+        resp.data[i].release_date = resp.data[i].release_date.substr(0, 10)        
+        const [year1, month1, day1] = resp.data[i].date.split('-')
+        resp.data[i].date = `${day1}.${month1}.${year1}`
+        const [year2, month2, day2] = resp.data[i].release_date.split('-')
+        resp.data[i].release_date =`${day2}.${month2}.${year2}`
+      }
       state.orders = resp.data
     },            
+    formatDate (date) {
+      if (!date) return null
+
+      const [year, month, day] = date.split('-')
+      return `${day}.${month}.${year}`
+    },    
     emptyCommit(){
         
     }
@@ -63,6 +77,7 @@ export default new Vuex.Store({
 //    }    
 //  },
   actions:{
+     
     //Units
     writeUnit({dispatch},unitData){
       axios({

@@ -44,7 +44,8 @@ import Order from "../components/Order"
     computed:{
       items(){
         return this.$store.getters.getOrders;
-      }
+      },
+  
     },
     data(){
       var mdata = {
@@ -53,8 +54,8 @@ import Order from "../components/Order"
       customer:"",
       recipe_id:-1,
       recipe_name:"",
-      date:-1,
-      release_date:-1,
+      date :new Date().toISOString().substr(0, 10),
+      release_date:new Date().toISOString().substr(0, 10),
       price:0,
       plan_qty:0,
       plan_cost:0,
@@ -99,8 +100,8 @@ import Order from "../components/Order"
           customer:"",
           recipe_id:-1,
           recipe_name:"",
-          date:-1,
-          release_date:-1,
+          date:new Date().toISOString().substr(0, 10),
+          release_date:new Date().toISOString().substr(0, 10),
           price:0,
           plan_qty:0,
           plan_cost:0,
@@ -114,6 +115,8 @@ import Order from "../components/Order"
           this.$store.dispatch('readOrder', {id:id})
             .then(resp=>{
               resp.data['dialog']=true        
+              resp.data.date = resp.data.date.substr(0,10)
+              resp.data.release_date = resp.data.release_date.substr(0,10)
               this.mdata = resp.data
             })
             .catch(err => console.log(err))

@@ -160,7 +160,7 @@ func GetRecipeWithPriceQuerry(id int) string {
 func GetRecipeContentQuery(id int) string {
 	return `
 	SELECT 
-		recipes_content.id,
+		recipes_content.id AS recipe_id,
 		recipes_content.material_id,
 		materials.name AS material_name,
 		recipes_content.qty,
@@ -216,7 +216,7 @@ func GetRecipeContentWithPricesQuery(id int) string {
 			AND price_periods.date = material_prices.date;
 	
 	SELECT 
-		recipes_content.id,
+		recipes_content.id AS recipe_id,
 		recipes_content.material_id,
 		materials.name AS material_name,
 		recipes_content.qty,

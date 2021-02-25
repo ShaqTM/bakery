@@ -119,7 +119,7 @@ func (mdb MDB) UpdateTableData(tableName string, data []interface{}, id int) err
 	placeholdersString := ""
 	valueIndex := 1
 	for _, col := range cols {
-		if (data[0].(map[string]interface{}))[col] == nil {
+		if col != "id" && (data[0].(map[string]interface{}))[col] == nil {
 			continue
 		}
 		namesString += (col + ",")
@@ -136,10 +136,14 @@ func (mdb MDB) UpdateTableData(tableName string, data []interface{}, id int) err
 	for _, item := range data {
 		vals := []interface{}{}
 		for _, col := range cols {
-			if item.(map[string]interface{})[col] == nil {
+			if col == "id" {
+				vals = append(vals, id)
+				continue
+			} else if item.(map[string]interface{})[col] == nil {
 				continue
 			}
 			vals = append(vals, item.(map[string]interface{})[col])
+
 		}
 		_, err := stmt.Exec(vals...)
 		if err != nil {

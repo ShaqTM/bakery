@@ -45,10 +45,12 @@ func writeOrder(mdb store.MDB) http.Handler {
 		id, err := mdb.UpdateData("orders", dataMap)
 		if err != nil {
 			sendAnswer400(w, err.Error())
+			return
 		}
 		err = mdb.UpdateTableData("order_details", dataMap["content"].([]interface{}), id)
 		if err != nil {
 			sendAnswer400(w, err.Error())
+			return
 		}
 
 		sendAnswer202(w, strconv.Itoa(id))

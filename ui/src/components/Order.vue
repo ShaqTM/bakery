@@ -9,7 +9,7 @@
           <span class="headline">Заказ</span>
         </v-card-title>
         <v-card-text>
-          <v-container>
+          <v-container dense>
             <v-row>
               <v-col
                 cols="12"
@@ -21,6 +21,7 @@
                   required
                   readonly
                   v-model="content.id"
+                  dense
                 ></v-text-field>
               </v-col>
               <v-col
@@ -28,11 +29,27 @@
                 sm="6"
                 md="4"
               >
-                <v-text-field
-                  label="Дата"
-                  required
-                  v-model="content.date"
-                ></v-text-field>
+                <v-menu
+                  v-model="menu1"
+                  :close-on-content-click="false"
+                  :nudge-right="40"
+                  transition="scale-transition"
+                  offset-y
+                  min-width="290px"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-text-field
+                      v-model="formatedDate"
+                      label="Дата"
+                      readonly
+                      v-bind="attrs"
+                      v-on="on"
+                      dense
+                      required
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker v-model="content.date" locale="ru-RU" @input="menu1 = false"></v-date-picker>
+                </v-menu>
               </v-col>
            </v-row>                       
             <v-row>
@@ -49,6 +66,7 @@
                   label="Рецепт"
                   required
                   @change="recipeChanged()"
+                  dense
                 ></v-select>
               </v-col>
            </v-row>
@@ -62,6 +80,7 @@
                   label="Заказчик"
                   required
                   v-model="content.customer"
+                  dense
                 ></v-text-field>
               </v-col>
               <v-col
@@ -69,11 +88,27 @@
                 sm="6"
                 md="4"
               >
-                <v-text-field
-                  label="Дата выдачи"
-                  required
-                  v-model="content.customer"
-                ></v-text-field>
+               <v-menu
+                  v-model="menu2"
+                  :close-on-content-click="false"
+                  :nudge-right="40"
+                  transition="scale-transition"
+                  offset-y
+                  min-width="290px"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-text-field
+                      v-model="formatedReleaseDate"
+                      label="Дата выдачи"
+                      readonly
+                      v-bind="attrs"
+                      v-on="on"
+                      dense
+                      required
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker v-model="content.release_date"  locale="ru-RU" @input="menu2 = false"></v-date-picker>
+                </v-menu>
               </v-col>              
            </v-row>           
            <v-row>
@@ -88,6 +123,7 @@
                   v-model.number="content.price"
                   :rules="[rules.num]"
                   @change="priceChanged()"
+                  dense
                 ></v-text-field>
               </v-col>             
               <v-col
@@ -103,6 +139,7 @@
                   label="Ед. изм."
                   required
                   readonly
+                  dense
                 ></v-select>
               </v-col>
            </v-row>
@@ -118,6 +155,7 @@
                   v-model.number="content.plan_qty"
                   :rules="[rules.num]"
                   @change="planQtyChanged()"
+                  dense
                 ></v-text-field>
               </v-col>             
               <v-col
@@ -131,6 +169,7 @@
                   v-model.number="content.plan_cost"
                   :rules="[rules.num]"
                   @change="planCostChanged()"
+                  dense
                 ></v-text-field>
               </v-col>
            </v-row>   
@@ -146,6 +185,7 @@
                   v-model.number="content.fact_qty"
                   :rules="[rules.num]"
                   @change="factQtyChanged()"
+                  dense
                 ></v-text-field>
               </v-col>             
               <v-col
@@ -159,6 +199,7 @@
                   v-model.number="content.fact_cost"
                   :rules="[rules.num]"
                   @change="factCostChanged()"
+                  dense
                 ></v-text-field>
               </v-col>
            </v-row>            
@@ -174,6 +215,7 @@
                   v-model.number="content.materials_cost"
                   :rules="[rules.num]"
                   readonly
+                  dense
                 ></v-text-field>
               </v-col>             
            </v-row>  
@@ -288,6 +330,12 @@
       },
       recipes(){
         return this.$store.getters.getRecipes;
+      },
+      formatedDate(){
+        return this.formatDate(this.content.date)
+      },
+      formatedReleaseDate(){
+        return this.formatDate(this.content.release_date)
       }
     },
     created() {
@@ -318,7 +366,8 @@
       mdiCloseThick 
 
       }
-      return {rules:rules,headers:headers,icons:icons}
+     
+      return {rules:rules,headers:headers,icons:icons,menu1: false,menu2: false}
     },
 //    data(){
       
@@ -329,6 +378,12 @@
 //        return  this.$store.getters.getUnit(this.content.id);
 //    },
     methods:{
+      formatDate (date) {
+        if (!date) return null
+
+        const [year, month, day] = date.split('-')
+        return `${day}.${month}.${year}`
+      },      
       updateTableOrder(){
         var len = this.content.content.length        
         for(let i = 0 ; i < len; i++) {
@@ -336,9 +391,9 @@
         }         
       },
       saveData(){
-        if (isNaN(this.content.output)){
-          return
-        }        
+//        if (isNaN(this.content.output)){
+//          return
+//        }        
         this.updateTableOrder()       
         this.$store.dispatch('writeOrder',this.content)
         this.content.dialog= false
@@ -437,6 +492,7 @@
           .then(resp=>{
             var len = resp.data.content.length
             for(let i = 0 ; i < len; i++) {
+              resp.data.content[i]["by_recipe"] = true
               this.content.content.splice(i, 0,resp.data.content[i])
             }
             for(let i = 0 ; i < len; i++) {

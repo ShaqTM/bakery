@@ -85,7 +85,7 @@ func GetOrderQuerry(id int) string {
 func GetOrderContentQuerry(id int) string {
 	return `
 	SELECT 
-		order_details.id,
+		order_details.id AS order_id,
 		order_details.material_id,
 		materials.name AS material_name,
 		order_details.qty,
