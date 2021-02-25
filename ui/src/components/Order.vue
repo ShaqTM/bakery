@@ -367,7 +367,7 @@
 
       }
      
-      return {rules:rules,headers:headers,icons:icons,menu1: false,menu2: false}
+      return {rules:rules,headers:headers,icons:icons,menu1: false,menu2: false,recipe:null}
     },
 //    data(){
       
@@ -479,6 +479,15 @@
         this.countMaterialCost()
       },
       recipeChanged(){
+
+        this.$store.dispatch('readRecipe', {id:this.content.recipe_id,price:true})
+          .then(resp=>{
+            this.recipe = resp.data
+            this.updateOrderByRecipe()
+          })         
+          .catch(err => console.log(err))
+      },
+      updateOrderByRecipe(){
         var len = this.content.content.length
         for(let i = 0 ; i < len; ) {
           if (this.content.content[i]["by_recipe"]===true){
@@ -487,33 +496,40 @@
           }else{
             i++
           }
+        }        
+        len = this.recipe.content.length
+        for(let i = 0 ; i < len; i++) {
+            this.recipe.content[i]["by_recipe"] = true
+            this.content.content.splice(i, 0,this.recipe.content.slice(i,i+1)[0])
         }
-        this.$store.dispatch('readRecipe', {id:this.content.recipe_id,price:true})
-          .then(resp=>{
-            var len = resp.data.content.length
-            for(let i = 0 ; i < len; i++) {
-              resp.data.content[i]["by_recipe"] = true
-              this.content.content.splice(i, 0,resp.data.content[i])
-            }
-            for(let i = 0 ; i < len; i++) {
-              this.content.content[i].cost = this.content.content[i].price*this.content.content[i].qty
-            }
+        len = this.content.content.length
+        for(let i = 0 ; i < len; i++) {
+          if (this.content.content[i]["by_recipe"]){
+            this.content.content[i].qty = this.recipe.content[i].qty*this.content.plan_qty
+            this.content.content[i].cost = this.content.content[i].price*this.content.content[i].qty
+          }
+        }
+        this.updateTableOrder()
+        this.countMaterialCost()
+        this.content.price = this.recipe.price
+        this.content.plan_cost = this.content.price*this.content.plan_qty
+        this.content.unit_short_name = this.recipe.unit_short_name
+        this.content.unit_id = this.recipe.unit_id        
 
-            this.updateTableOrder()
-            this.countMaterialCost()
-            this.content.price = resp.data.price
-            this.content.unit_short_name = resp.data.unit_short_name
-            this.content.unit_id = resp.data.unit_id
-
-          })         
-          .catch(err => console.log(err))
       },
+
+
+
       priceChanged(){
         this.content.plan_cost = this.content.price*this.content.plan_qty
         this.content.fact_cost = this.content.price*this.content.fact_qty
       },
       planQtyChanged(){
-        this.content.plan_cost = this.content.price*this.content.plan_qty
+        if (!this.recipe===null){
+          this.recipeChanged()          
+        } else{
+          this.updateOrderByRecipe()
+        }
       },
       planCostChanged(){
         if (!this.content.plan_qty===0){

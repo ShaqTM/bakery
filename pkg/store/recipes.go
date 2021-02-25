@@ -150,7 +150,7 @@ func GetRecipeWithPriceQuerry(id int) string {
 			LEFT JOIN public.units AS units 
 			ON recipes.unit_id = units.id
 				LEFT JOIN prices 
-				ON 	recipes.id = prices.recipe_id			
+				ON 	recipes.id = prices.recipe_id
 		
 	WHERE 
 		recipes.id = ` + strconv.Itoa(id) + `;`
@@ -224,8 +224,10 @@ func GetRecipeContentWithPricesQuery(id int) string {
 		materials.recipe_unit_id AS unit_id,
 		units.name AS unit_name,
 		units.short_name AS unit_short_name,
-		COALESCE(prices.price,0) AS price,
-		materials.coefficient AS coefficient
+		materials.coefficient AS coefficient,
+		CASE WHEN materials.coefficient = 0 THEN 0 
+		ELSE COALESCE(prices.price,0)/materials.coefficient
+		END AS price
 	FROM 
 		public.recipes_content AS recipes_content 
 			LEFT JOIN public.materials AS materials 

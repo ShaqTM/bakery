@@ -80,7 +80,9 @@ func updateDb(db *sql.DB) {
 	if dbVersion < 1 {
 		updateDbToVerion1(db)
 	}
-
+	if dbVersion < 2 {
+		updateDbToVerion2(db)
+	}
 }
 func getDbVersion(db *sql.DB) int {
 	rows, err := db.Query(`SELECT integer_Value FROM public.settings WHERE name = 'dbVersion'`)
@@ -190,9 +192,22 @@ func updateDbToVerion1(db *sql.DB) {
 		 `
 	_, err := db.Exec(initTableString)
 	if err != nil {
-		fmt.Println("Error creating tables:", err)
-		panic("Error creating tables")
+		fmt.Println("Error updating tables:", err)
+		panic("Error updating tables")
 	}
 	setDbVersion(1, db)
+
+}
+
+func updateDbToVerion2(db *sql.DB) {
+	initTableString := `
+	ALTER TABLE public.order_details ALTER COLUMN price SET DATA TYPE numeric(15,4);
+		 `
+	_, err := db.Exec(initTableString)
+	if err != nil {
+		fmt.Println("Error updating tables:", err)
+		panic("Error updating tables")
+	}
+	setDbVersion(2, db)
 
 }
