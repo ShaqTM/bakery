@@ -226,7 +226,7 @@ func GetRecipeContentWithPricesQuery(id int) string {
 		units.short_name AS unit_short_name,
 		materials.coefficient AS coefficient,
 		CASE WHEN materials.coefficient = 0 THEN 0 
-		ELSE COALESCE(prices.price,0)/materials.coefficient
+		ELSE CAST(COALESCE(prices.price,0)/materials.coefficient AS NUMERIC(15,4))
 		END AS price
 	FROM 
 		public.recipes_content AS recipes_content 

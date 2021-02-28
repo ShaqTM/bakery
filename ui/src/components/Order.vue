@@ -12,9 +12,7 @@
           <v-container dense>
             <v-row>
               <v-col
-                cols="12"
-                sm="6"
-                md="4"
+
               >
                 <v-text-field
                   label="Номер заказа"
@@ -25,9 +23,7 @@
                 ></v-text-field>
               </v-col>
               <v-col
-                cols="12"
-                sm="6"
-                md="4"
+
               >
                 <v-menu
                   v-model="menu1"
@@ -52,13 +48,7 @@
                 </v-menu>
               </v-col>
            </v-row>                       
-            <v-row>
-              <v-col
-                cols="12"
-                sm="6"
-                md="4"
-              >
-                <v-select
+              <v-select
                   v-model="content.recipe_id"
                   :items="recipes"
                   item-text="name"
@@ -68,13 +58,8 @@
                   @change="recipeChanged()"
                   dense
                 ></v-select>
-              </v-col>
-           </v-row>
             <v-row>
               <v-col
-                cols="12"
-                sm="6"
-                md="4"
               >
                 <v-text-field
                   label="Заказчик"
@@ -85,8 +70,8 @@
               </v-col>
               <v-col
                 cols="12"
-                sm="6"
-                md="4"
+                sm="3"
+                md="2"
               >
                <v-menu
                   v-model="menu2"
@@ -500,13 +485,13 @@
         len = this.recipe.content.length
         for(let i = 0 ; i < len; i++) {
             this.recipe.content[i]["by_recipe"] = true
-            this.content.content.splice(i, 0,this.recipe.content.slice(i,i+1)[0])
+            this.content.content.splice(i, 0,Object.assign({}, this.recipe.content[i]))
         }
         len = this.content.content.length
         for(let i = 0 ; i < len; i++) {
           if (this.content.content[i]["by_recipe"]){
             this.content.content[i].qty = this.recipe.content[i].qty*this.content.plan_qty
-            this.content.content[i].cost = this.content.content[i].price*this.content.content[i].qty
+            this.content.content[i].cost = Math.round(this.content.content[i].price*this.content.content[i].qty*100)/100
           }
         }
         this.updateTableOrder()
@@ -525,14 +510,14 @@
         this.content.fact_cost = this.content.price*this.content.fact_qty
       },
       planQtyChanged(){
-        if (!this.recipe===null){
+        if (this.recipe==null){
           this.recipeChanged()          
         } else{
           this.updateOrderByRecipe()
         }
       },
       planCostChanged(){
-        if (!this.content.plan_qty===0){
+        if (this.content.plan_qty!=0){
           this.content.price = Math.round(this.content.plan_cost/this.content.plan_qty*100)/100
           this.content.fact_cost = this.content.price*this.content.fact_qty
         }
@@ -541,7 +526,7 @@
         this.content.fact_cost = this.content.price*this.content.fact_qty
       },
       factCostChanged(){
-        if (!this.content.fact_qty===0){
+        if (this.content.fact_qty!=0){
           this.content.price = Math.round(this.content.fact_cost/this.content.fact_qty*100)/100
           this.content.plan_cost = this.content.price*this.content.plan_qty
         }

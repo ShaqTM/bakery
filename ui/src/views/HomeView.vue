@@ -1,40 +1,65 @@
 <template>
-      <v-card
-    class="mx-auto"
-    max-width="300"
-    tile
-  >
-        <v-list dense>
-          <v-subheader>MENU</v-subheader>
-          <v-list-item-group
-            v-model="selectedItem"
-            color="primary"
-          >
-            <v-list-item
-              v-for="(item, i) in items"
-              :key="i"
-              :to="item.link"
-            >
-              <v-list-item-content>
-                <v-list-item-title v-text="item.text"></v-list-item-title>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list-item-group>
-        </v-list>    
-    </v-card> 
+<div>
+  <v-tabs
+    v-model="tab"
+    fixed-tabs
+    background-color="indigo"
+    dark
+    @change="tabChanged"
+    >
+    <v-tab 
+      v-for = "item in items"
+      :key = "item.text">
+      {{ item.text }}      
+    
+    </v-tab>
+  </v-tabs>
+  <v-tabs-items v-model="tab">
+    <v-tab-item
+      v-for="item in items"
+      :key="item.text"
+    >
+    <v-card flat>
+      <component v-bind:is="item.component"></component>
+          
+        </v-card>
+      </v-tab-item>
+    </v-tabs-items>  
+  </div>
 </template>
-
 <script>
+  import Orders from "./Orders.vue"
+  import Units from "./Units.vue"
+  import Recipes from "./Recipes.vue"
+  import Materials from "./Materials.vue"
+
   export default {
     name: 'HomeView',
+    components: {Materials,Recipes,Orders,Units},
     data: () => ({
-      selectedItem: 1,
+      tab: 'Заказы',
       items: [
-        { text: 'Заказы',link:'/orders'},
-        { text: 'Рецепты',link:'/recipes'},
-        { text: 'Материалы',link:'/materials'},
-        { text: 'Единицы измерения',link:'/units'},
-      ],
+        { text: 'Единицы измерения',component:Units},
+        { text: 'Материалы',component:Recipes},
+        { text: 'Рецепты',component:Materials},
+        { text: 'Заказы',component:Orders}
+        ],      
     }),
+    methods:{
+      tabChanged(){
+        if (this.tab==3){
+          this.$store.dispatch('readOrders')
+        }else if (this.tab==1){
+          this.$store.dispatch('readMaterials')
+        }else if (this.tab==0){
+          this.$store.dispatch('readUnits')
+        }else if (this.tab==2){
+          this.$store.dispatch('readRecipes')
+        }
+
+
+
+      }
+    }
   }
 </script>
