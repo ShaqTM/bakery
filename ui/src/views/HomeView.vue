@@ -40,8 +40,8 @@
       tab: 'Заказы',
       items: [
         { text: 'Единицы измерения',component:Units},
-        { text: 'Материалы',component:Recipes},
-        { text: 'Рецепты',component:Materials},
+        { text: 'Материалы',component:Materials},
+        { text: 'Рецепты',component:Recipes},
         { text: 'Заказы',component:Orders}
         ],      
     }),

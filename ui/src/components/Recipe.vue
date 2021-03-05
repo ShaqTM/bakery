@@ -33,7 +33,7 @@
                   label="Выход"
                   required
                   v-model.number="content.output"
-                  :rules="[rules.num]"
+                  :rules="[rules.num,rules.notEmptyNum]"
                 ></v-text-field>
               </v-col>             
               <v-col
@@ -76,7 +76,7 @@
          <v-text-field
           dense
             v-model.number="item.qty"
-            :rules="[rules.num]"            
+            :rules="[rules.num,rules.notEmptyNum]"            
             required
             ></v-text-field>          
         </template>      
@@ -171,7 +171,7 @@
       { text: '--------', value: 'actions', sortable: false },
 
         ]
-      var rules = {num: value => {return !isNaN(value)||'Должно быть число'}}
+      var rules = {num: value => {return !isNaN(value)||'Должно быть число'},notEmptyNum: value => {return value!=0||'Должно быть заполнено'}}
       var icons= {
       mdiArrowDownThick,
       mdiArrowUpThick,
@@ -190,7 +190,7 @@
 //    },
     methods:{
       saveData(){
-        if (isNaN(this.content.output)){
+        if (isNaN(this.content.output)|| this.content.output==0){
           return
         }        
         var len = this.content.content.length

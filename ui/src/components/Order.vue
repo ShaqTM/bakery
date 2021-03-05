@@ -2,7 +2,7 @@
     <v-dialog
       v-model="this.content.dialog"
       persistent
-      max-width="1000"
+      max-width="1200"
     >
        <v-card>
         <v-card-title>
@@ -453,7 +453,7 @@
         for(let i = 0 ; i < len; i++) {
           mMaterialCost += this.content.content[i]["cost"]
         } 
-        this.content.materials_cost = mMaterialCost       
+        this.content.materials_cost =  Math.round(mMaterialCost*100)/100
       },
       materialQtyChanged(item){
         item.cost=item.qty*item.price
@@ -490,14 +490,14 @@
         len = this.content.content.length
         for(let i = 0 ; i < len; i++) {
           if (this.content.content[i]["by_recipe"]){
-            this.content.content[i].qty = this.recipe.content[i].qty*this.content.plan_qty
+            this.content.content[i].qty = Math.round(this.recipe.content[i].qty*this.content.plan_qty/this.recipe.output*100)/100
             this.content.content[i].cost = Math.round(this.content.content[i].price*this.content.content[i].qty*100)/100
           }
         }
         this.updateTableOrder()
         this.countMaterialCost()
         this.content.price = this.recipe.price
-        this.content.plan_cost = this.content.price*this.content.plan_qty
+        this.content.plan_cost =  Math.round(this.content.price*this.content.plan_qty*100)/100
         this.content.unit_short_name = this.recipe.unit_short_name
         this.content.unit_id = this.recipe.unit_id        
 
