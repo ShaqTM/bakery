@@ -21,8 +21,8 @@ type myservice struct{}
 func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 	changes <- svc.Status{State: svc.StartPending}
-	StartServer()
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
+	go StartServer()
 
 loop:
 	for {
@@ -80,4 +80,5 @@ func StartServer() {
 	api.AddRecipesRoutes(&router, mdb)
 
 	http.ListenAndServe(":5000", router)
+
 }

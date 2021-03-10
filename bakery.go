@@ -45,7 +45,7 @@ func main() {
 			//		time.Sleep(10 * time.Second) // or runtime.Gosched() or similar per @misterbee
 		}
 	case "install":
-		err = service.InstallService(svcName, "my service")
+		err = service.InstallService(svcName, "Bakery backend service")
 	case "remove":
 		err = service.RemoveService(svcName)
 	case "start":
