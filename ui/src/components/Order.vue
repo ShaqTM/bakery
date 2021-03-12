@@ -212,6 +212,8 @@
         :headers="headers"
         :items="content.content"
         class="elevation-1"
+                disable-pagination=true
+        hide-default-footer=true
       >
         <template v-slot:[`item.material_id`]="{ item }">
           <v-select
@@ -396,7 +398,13 @@
         item.unit_id = mMaterial.recipe_unit_id
         var mUnit = this.$store.getters.getUnit(item.unit_id)
         item.unit_short_name = mUnit.short_name
-        item.price = mMaterial.price
+        if (mMaterial.coefficient==0){
+          item.price = 0
+        } else{
+          item.price = Math.round(mMaterial.price/mMaterial.coefficient*10000)/10000
+        }
+
+        
         item.cost = item.price*item.qty
         this.countMaterialCost()
 

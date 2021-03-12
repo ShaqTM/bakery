@@ -50,7 +50,7 @@
         if (this.tab==3){
           this.$store.dispatch('readOrders')
         }else if (this.tab==1){
-          this.$store.dispatch('readMaterials')
+          this.$store.dispatch('readMaterials',true)
         }else if (this.tab==0){
           this.$store.dispatch('readUnits')
         }else if (this.tab==2){

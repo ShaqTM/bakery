@@ -10,6 +10,8 @@
         :items="items"
         :items-per-page="15"
         class="elevation-1"
+        disable-pagination=true
+        hide-default-footer=true
       >
         <template v-slot:[`item.actions`]="{ item }">
           <v-icon

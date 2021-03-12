@@ -60,6 +60,8 @@
         :headers="headers"
         :items="content.content"
         class="elevation-1"
+        disable-pagination=true
+        hide-default-footer=true
       >
         <template v-slot:[`item.material_id`]="{ item }">
           <v-select
