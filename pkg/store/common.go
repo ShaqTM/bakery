@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 //MDB Структура, содержит ссылку на интерфейс к ДБ
 type MDB struct {
+	Log *logrus.Logger
 	Pdb **sql.DB
 }
 
@@ -48,10 +51,12 @@ func GetRowsQuerry(tableName string, params map[string]string) string {
 //UpdateData Запись данных в таблицу
 func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) (int, error) {
 	db := *mdb.Pdb
-
-	rows, err := db.Query(`SELECT * FROM ` + tableName + ` WHERE false`)
+	queryText := `SELECT * FROM ` + tableName + ` WHERE false`
+	rows, err := db.Query(queryText)
 	if err != nil {
-		fmt.Println("Error reading data: ", err)
+		mdb.Log.Error("Error reading columns:", err)
+		mdb.Log.Error("Query:")
+		mdb.Log.Error(queryText)
 		return -1, err
 	}
 	cols, _ := rows.Columns()
@@ -79,18 +84,24 @@ func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) (int, e
 
 	if newRecord {
 		lastInsertID := -1
-		err := db.QueryRow(`insert into public.`+tableName+`(`+namesString+`) VALUES(`+placeholdersString+`) RETURNING id;`, vals...).Scan(&lastInsertID)
+		queryText := `INSERT INTO public.` + tableName + `(` + namesString + `) VALUES(` + placeholdersString + `) RETURNING id;`
+		err := db.QueryRow(queryText, vals...).Scan(&lastInsertID)
 		if err != nil {
-			fmt.Println("Error inserting data: ", err)
-			fmt.Println(`insert into public.` + tableName + `(` + namesString + `) VALUES(` + placeholdersString + `) RETURNING id;`)
-			fmt.Println(vals)
+			mdb.Log.Error("Error inserting data:", err)
+			mdb.Log.Error("Query:")
+			mdb.Log.Error(queryText)
+			mdb.Log.Error(vals...)
 			return -1, err
 		}
 		return lastInsertID, nil
 	}
-	_, err = db.Exec(`UPDATE public.`+tableName+` SET (`+namesString+`) = (`+placeholdersString+`) WHERE id = `+strconv.Itoa(int(data["id"].(float64)))+`;`, vals...)
+	queryText = `UPDATE public.` + tableName + ` SET (` + namesString + `) = (` + placeholdersString + `) WHERE id = ` + strconv.Itoa(int(data["id"].(float64))) + `;`
+	_, err = db.Exec(queryText, vals...)
 	if err != nil {
-		fmt.Println("Error updating data: ", err)
+		mdb.Log.Error("Error updating data:", err)
+		mdb.Log.Error("Query:")
+		mdb.Log.Error(queryText)
+		mdb.Log.Error(vals...)
 		return -1, err
 	}
 	return int(data["id"].(float64)), nil
@@ -100,16 +111,21 @@ func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) (int, e
 //UpdateTableData Обновляет данные в табличной части
 func (mdb MDB) UpdateTableData(tableName string, data []interface{}, id int) error {
 	db := *mdb.Pdb
-	rows, err := db.Query(`SELECT * FROM ` + tableName + ` WHERE false`)
+	queryText := `SELECT * FROM ` + tableName + ` WHERE false`
+	rows, err := db.Query(queryText)
 	if err != nil {
-		fmt.Println("Error reading data: ", err)
+		mdb.Log.Error("Error reading columns:", err)
+		mdb.Log.Error("Query:")
+		mdb.Log.Error(queryText)
 		return err
 	}
 	cols, _ := rows.Columns()
-
-	_, err = db.Exec(`DELETE FROM public.` + tableName + ` WHERE id = ` + strconv.Itoa(id) + `;`)
+	queryText = `DELETE FROM public.` + tableName + ` WHERE id = ` + strconv.Itoa(id) + `;`
+	_, err = db.Exec(queryText)
 	if err != nil {
-		fmt.Println("Error deleting old rows: ", err)
+		mdb.Log.Error("Error deleting old rows:", err)
+		mdb.Log.Error("Query:")
+		mdb.Log.Error(queryText)
 		return err
 	}
 	if len(data) == 0 {
@@ -128,9 +144,12 @@ func (mdb MDB) UpdateTableData(tableName string, data []interface{}, id int) err
 	}
 	namesString = strings.TrimSuffix(namesString, ",")
 	placeholdersString = strings.TrimSuffix(placeholdersString, ",")
-	stmt, err := db.Prepare(`insert into public.` + tableName + `(` + namesString + `) VALUES(` + placeholdersString + `);`)
+	queryText = `insert into public.` + tableName + `(` + namesString + `) VALUES(` + placeholdersString + `);`
+	stmt, err := db.Prepare(queryText)
 	if err != nil {
-		fmt.Println("Error preparing for inserting data: ", err)
+		mdb.Log.Error("Error preparing for inserting data:", err)
+		mdb.Log.Error("Query:")
+		mdb.Log.Error(queryText)
 		return err
 	}
 	for _, item := range data {
@@ -147,7 +166,11 @@ func (mdb MDB) UpdateTableData(tableName string, data []interface{}, id int) err
 		}
 		_, err := stmt.Exec(vals...)
 		if err != nil {
-			fmt.Println("Error inserting data: ", err)
+			mdb.Log.Error("Error inserting data:", err)
+			mdb.Log.Error("Query:")
+			mdb.Log.Error(queryText)
+			mdb.Log.Error(vals...)
+
 			return err
 		}
 	}
@@ -157,9 +180,12 @@ func (mdb MDB) UpdateTableData(tableName string, data []interface{}, id int) err
 //DeleteData уделение данных в таблице по id
 func (mdb MDB) DeleteData(tableName string, id int) error {
 	db := *mdb.Pdb
-	_, err := db.Exec(`DELETE FROM public.` + tableName + ` WHERE id = ` + strconv.Itoa(id) + `;`)
+	queryText := `DELETE FROM public.` + tableName + ` WHERE id = ` + strconv.Itoa(id) + `;`
+	_, err := db.Exec(queryText)
 	if err != nil {
-		fmt.Println("Error deleting old rows: ", err)
+		mdb.Log.Error("Error deleting old rows:", err)
+		mdb.Log.Error("Query:")
+		mdb.Log.Error(queryText)
 		return err
 	}
 	return nil
@@ -171,7 +197,9 @@ func (mdb MDB) ReadRow(queryText string) (map[string]interface{}, error) {
 	db := *mdb.Pdb
 	rows, err := db.Query(queryText)
 	if err != nil {
-		fmt.Println("Error reading data: ", err)
+		mdb.Log.Error("Error reading data:", err)
+		mdb.Log.Error("Query:")
+		mdb.Log.Error(queryText)
 		return data, err
 	}
 	cols, _ := rows.Columns()
@@ -185,7 +213,9 @@ func (mdb MDB) ReadRow(queryText string) (map[string]interface{}, error) {
 	}
 	// Scan the result into the column pointers...
 	if err := rows.Scan(columnPointers...); err != nil {
-		fmt.Println("Error reading data: ", err)
+		mdb.Log.Error("Error scanning rows:", err)
+		mdb.Log.Error("Query:")
+		mdb.Log.Error(queryText)
 		return data, err
 	}
 
@@ -203,8 +233,9 @@ func (mdb MDB) ReadRows(queryText string) ([]map[string]interface{}, error) {
 	db := *mdb.Pdb
 	rows, err := db.Query(queryText) // Note: Ignoring errors for brevity
 	if err != nil {
-		fmt.Println("Error reading data: ", err)
-		fmt.Println(queryText)
+		mdb.Log.Error("Error reading data:", err)
+		mdb.Log.Error("Query:")
+		mdb.Log.Error(queryText)
 		return dataArray, err
 	}
 	cols, _ := rows.Columns()
@@ -216,7 +247,9 @@ func (mdb MDB) ReadRows(queryText string) ([]map[string]interface{}, error) {
 
 	for rows.Next() {
 		if err := rows.Scan(columnPointers...); err != nil {
-			fmt.Println("Error reading data: ", err)
+			mdb.Log.Error("Error scanning rows:", err)
+			mdb.Log.Error("Query:")
+			mdb.Log.Error(queryText)
 			return dataArray, err
 		}
 		data := make(map[string]interface{})

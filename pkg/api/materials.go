@@ -3,7 +3,6 @@ package api
 import (
 	"bakery/pkg/store"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -33,14 +32,15 @@ func writeMaterial(mdb store.MDB) http.Handler {
 		rc := r.Body
 		b, err := ioutil.ReadAll(rc)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
+			mdb.Log.Error("Error reading querry:", err)
 			sendAnswer400(w, "")
 			return
 		}
 		dataMap := make(map[string]interface{})
 		err = json.Unmarshal(b, &dataMap)
 		if err != nil {
-			fmt.Println(string(b))
+			mdb.Log.Error("Error unmarshal query")
+			mdb.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -66,14 +66,15 @@ func readMaterials(mdb store.MDB) http.Handler {
 		}
 		query := r.URL.Query()
 		withPrice := query["price"] != nil && query["price"][0] == "true"
-		units, err := mdb.ReadMaterials(withPrice)
+		materials, err := mdb.ReadMaterials(withPrice)
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
 		}
-		jsonArray, err := json.Marshal(units)
+		jsonArray, err := json.Marshal(materials)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
+			mdb.Log.Error("Error marshal JSON:", err)
+			mdb.Log.Error(materials)
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -110,7 +111,8 @@ func readMaterial(mdb store.MDB) http.Handler {
 		}
 		jsonText, err := json.Marshal(material)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
+			mdb.Log.Error("Error marshal JSON:", err)
+			mdb.Log.Error(material)
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -132,14 +134,15 @@ func writeMaterialPrice(mdb store.MDB) http.Handler {
 		rc := r.Body
 		b, err := ioutil.ReadAll(rc)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
-			sendAnswer400(w, "")
+			mdb.Log.Error("Error reading querry:", err)
+			sendAnswer400(w, err.Error())
 			return
 		}
 		dataMap := make(map[string]interface{})
 		err = json.Unmarshal(b, &dataMap)
 		if err != nil {
-			fmt.Println(string(b))
+			mdb.Log.Error("Error unmarshal query: ", err)
+			mdb.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}

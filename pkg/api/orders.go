@@ -3,7 +3,6 @@ package api
 import (
 	"bakery/pkg/store"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -31,14 +30,15 @@ func writeOrder(mdb store.MDB) http.Handler {
 		rc := r.Body
 		b, err := ioutil.ReadAll(rc)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
-			sendAnswer400(w, "")
+			mdb.Log.Error("Error reading querry:", err)
+			sendAnswer400(w, err.Error())
 			return
 		}
 		dataMap := make(map[string]interface{})
 		err = json.Unmarshal(b, &dataMap)
 		if err != nil {
-			fmt.Println(string(b))
+			mdb.Log.Error("Error unmarshal query: ", err)
+			mdb.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -67,14 +67,15 @@ func readOrders(mdb store.MDB) http.Handler {
 			sendAnswer200(w, "")
 			return
 		}
-		units, err := mdb.ReadOrders()
+		orders, err := mdb.ReadOrders()
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
 		}
-		jsonArray, err := json.Marshal(units)
+		jsonArray, err := json.Marshal(orders)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
+			mdb.Log.Error("Error marshal orders:", err)
+			mdb.Log.Error(orders)
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -100,6 +101,8 @@ func readOrder(mdb store.MDB) http.Handler {
 		}
 		id, err := strconv.Atoi(query["id"][0])
 		if err != nil {
+			mdb.Log.Error("Error reading id:", query["id"][0])
+			mdb.Log.Error(err.Error())
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -110,7 +113,8 @@ func readOrder(mdb store.MDB) http.Handler {
 		}
 		jsonText, err := json.Marshal(order)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
+			mdb.Log.Error("Error marshal order:", err)
+			mdb.Log.Error(order)
 			sendAnswer400(w, err.Error())
 			return
 		}

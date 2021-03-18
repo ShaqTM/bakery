@@ -3,7 +3,6 @@ package api
 import (
 	"bakery/pkg/store"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -33,14 +32,15 @@ func writeRecipe(mdb store.MDB) http.Handler {
 		rc := r.Body
 		b, err := ioutil.ReadAll(rc)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
-			sendAnswer400(w, "")
+			mdb.Log.Error("Error reading querry:", err)
+			sendAnswer400(w, err.Error())
 			return
 		}
 		dataMap := make(map[string]interface{})
 		err = json.Unmarshal(b, &dataMap)
 		if err != nil {
-			fmt.Println(string(b))
+			mdb.Log.Error("Error unmarshal query: ", err.Error())
+			mdb.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -69,14 +69,15 @@ func readRecipes(mdb store.MDB) http.Handler {
 		}
 		query := r.URL.Query()
 		withPrice := query["price"] != nil && query["price"][0] == "true"
-		units, err := mdb.ReadRecipes(withPrice)
+		recipes, err := mdb.ReadRecipes(withPrice)
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
 		}
-		jsonArray, err := json.Marshal(units)
+		jsonArray, err := json.Marshal(recipes)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
+			mdb.Log.Error("Error marshal recipes:", err)
+			mdb.Log.Error(recipes)
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -103,6 +104,8 @@ func readRecipe(mdb store.MDB) http.Handler {
 		withPrice := query["price"] != nil && query["price"][0] == "true"
 		id, err := strconv.Atoi(query["id"][0])
 		if err != nil {
+			mdb.Log.Error("Error reading id:", query["id"][0])
+			mdb.Log.Error(err.Error())
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -113,7 +116,8 @@ func readRecipe(mdb store.MDB) http.Handler {
 		}
 		jsonText, err := json.Marshal(recipe)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
+			mdb.Log.Error("Error marshal recipe:", err)
+			mdb.Log.Error(recipe)
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -135,14 +139,15 @@ func writeRecipePrice(mdb store.MDB) http.Handler {
 		rc := r.Body
 		b, err := ioutil.ReadAll(rc)
 		if err != nil {
-			fmt.Println("error reading querry:", err)
+			mdb.Log.Error("Error reading querry:", err)
 			sendAnswer400(w, "")
 			return
 		}
 		dataMap := make(map[string]interface{})
 		err = json.Unmarshal(b, &dataMap)
 		if err != nil {
-			fmt.Println(string(b))
+			mdb.Log.Error("Error unmarshal query: ", err)
+			mdb.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
