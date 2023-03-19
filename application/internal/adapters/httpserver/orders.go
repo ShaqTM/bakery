@@ -1,23 +1,32 @@
-package api
+package httpserver
 
 import (
-	"bakery/pkg/store"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
-//AddOrdersRoutes Добавляет обработку роутов
-func AddOrdersRoutes(router **mux.Router, mdb store.MDB) {
-	(*router).Handle("/api/writeorder", writeOrder(mdb)).Methods("POST", "OPTIONS")
-	(*router).Handle("/api/readorders", readOrders(mdb)).Methods("GET", "OPTIONS")
-	(*router).Handle("/api/readorder/", readOrder(mdb)).Methods("GET", "OPTIONS")
+func init() {
+	routes = append(routes, route{
+		Methods: []string{"POST", "OPTIONS"},
+		Path:    "/api/writeorder",
+		Handler: (*Server).writeOrder,
+	})
+	routes = append(routes, route{
+		Methods: []string{"GET", "OPTIONS"},
+		Path:    "/api/readorders",
+		Handler: (*Server).readOrders,
+	})
+	routes = append(routes, route{
+		Methods: []string{"GET", "OPTIONS"},
+		Path:    "/api/readorder/",
+		Handler: (*Server).readOrder,
+	})
+
 }
 
-func writeOrder(mdb store.MDB) http.Handler {
+func (s *Server) writeOrder() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "POST" {
 		//			sendAnswer405(w, "bad method")
@@ -30,15 +39,15 @@ func writeOrder(mdb store.MDB) http.Handler {
 		rc := r.Body
 		b, err := ioutil.ReadAll(rc)
 		if err != nil {
-			mdb.Log.Error("Error reading querry:", err)
+			s.Log.Error("Error reading querry:", err)
 			sendAnswer400(w, err.Error())
 			return
 		}
 		dataMap := make(map[string]interface{})
 		err = json.Unmarshal(b, &dataMap)
 		if err != nil {
-			mdb.Log.Error("Error unmarshal query: ", err)
-			mdb.Log.Error(string(b))
+			s.Log.Error("Error unmarshal query: ", err)
+			s.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -57,7 +66,7 @@ func writeOrder(mdb store.MDB) http.Handler {
 	})
 }
 
-func readOrders(mdb store.MDB) http.Handler {
+func (s *Server) readOrders() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")
@@ -74,8 +83,8 @@ func readOrders(mdb store.MDB) http.Handler {
 		}
 		jsonArray, err := json.Marshal(orders)
 		if err != nil {
-			mdb.Log.Error("Error marshal orders:", err)
-			mdb.Log.Error(orders)
+			s.Log.Error("Error marshal orders:", err)
+			s.Log.Error(orders)
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -84,7 +93,7 @@ func readOrders(mdb store.MDB) http.Handler {
 	})
 }
 
-func readOrder(mdb store.MDB) http.Handler {
+func (s *Server) readOrder() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")

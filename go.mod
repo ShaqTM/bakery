@@ -6,5 +6,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/lib/pq v1.9.0
 	github.com/sirupsen/logrus v1.8.1
-	golang.org/x/sys v0.0.0-20210309074719-68d13333faf2
+	golang.org/x/sys v0.3.0
+	gopkg.in/yaml.v2 v2.4.0
+
 )

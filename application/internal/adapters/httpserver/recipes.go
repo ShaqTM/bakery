@@ -1,25 +1,37 @@
-package api
+package httpserver
 
 import (
-	"bakery/pkg/store"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
-//AddRecipesRoutes Добавляет обработку роутов
-func AddRecipesRoutes(router **mux.Router, mdb store.MDB) {
-	(*router).Handle("/api/writerecipe", writeRecipe(mdb)).Methods("POST", "OPTIONS")
-	(*router).Handle("/api/readrecipes", readRecipes(mdb)).Methods("GET", "OPTIONS")
-	(*router).Handle("/api/readrecipe/", readRecipe(mdb)).Methods("GET", "OPTIONS")
+func init() {
+	routes = append(routes, route{
+		Methods: []string{"POST", "OPTIONS"},
+		Path:    "/api/writerecipe",
+		Handler: (*Server).writeRecipe,
+	})
+	routes = append(routes, route{
+		Methods: []string{"GET", "OPTIONS"},
+		Path:    "/api/readrecipes",
+		Handler: (*Server).readRecipes,
+	})
+	routes = append(routes, route{
+		Methods: []string{"GET", "OPTIONS"},
+		Path:    "/api/readrecipe/",
+		Handler: (*Server).readRecipe,
+	})
+	routes = append(routes, route{
+		Methods: []string{"POST", "OPTIONS"},
+		Path:    "/api/writerecipeprice",
+		Handler: (*Server).writeRecipePrice,
+	})
 
-	(*router).Handle("/api/writerecipeprice", writeRecipePrice(mdb)).Methods("POST", "OPTIONS")
 }
 
-func writeRecipe(mdb store.MDB) http.Handler {
+func (s *Server) writeRecipe() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "POST" {
 		//			sendAnswer405(w, "bad method")
@@ -32,15 +44,15 @@ func writeRecipe(mdb store.MDB) http.Handler {
 		rc := r.Body
 		b, err := ioutil.ReadAll(rc)
 		if err != nil {
-			mdb.Log.Error("Error reading querry:", err)
+			s.Log.Error("Error reading querry:", err)
 			sendAnswer400(w, err.Error())
 			return
 		}
 		dataMap := make(map[string]interface{})
 		err = json.Unmarshal(b, &dataMap)
 		if err != nil {
-			mdb.Log.Error("Error unmarshal query: ", err.Error())
-			mdb.Log.Error(string(b))
+			s.Log.Error("Error unmarshal query: ", err.Error())
+			s.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -57,7 +69,7 @@ func writeRecipe(mdb store.MDB) http.Handler {
 	})
 }
 
-func readRecipes(mdb store.MDB) http.Handler {
+func (s *Server) readRecipes() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")
@@ -76,8 +88,8 @@ func readRecipes(mdb store.MDB) http.Handler {
 		}
 		jsonArray, err := json.Marshal(recipes)
 		if err != nil {
-			mdb.Log.Error("Error marshal recipes:", err)
-			mdb.Log.Error(recipes)
+			s.Log.Error("Error marshal recipes:", err)
+			s.Log.Error(recipes)
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -86,7 +98,7 @@ func readRecipes(mdb store.MDB) http.Handler {
 	})
 }
 
-func readRecipe(mdb store.MDB) http.Handler {
+func (s *Server) readRecipe() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")
@@ -104,8 +116,8 @@ func readRecipe(mdb store.MDB) http.Handler {
 		withPrice := query["price"] != nil && query["price"][0] == "true"
 		id, err := strconv.Atoi(query["id"][0])
 		if err != nil {
-			mdb.Log.Error("Error reading id:", query["id"][0])
-			mdb.Log.Error(err.Error())
+			s.Log.Error("Error reading id:", query["id"][0])
+			s.Log.Error(err.Error())
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -116,8 +128,8 @@ func readRecipe(mdb store.MDB) http.Handler {
 		}
 		jsonText, err := json.Marshal(recipe)
 		if err != nil {
-			mdb.Log.Error("Error marshal recipe:", err)
-			mdb.Log.Error(recipe)
+			s.Log.Error("Error marshal recipe:", err)
+			s.Log.Error(recipe)
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -126,7 +138,7 @@ func readRecipe(mdb store.MDB) http.Handler {
 	})
 }
 
-func writeRecipePrice(mdb store.MDB) http.Handler {
+func (s *Server) writeRecipePrice() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "POST" {
 		//			sendAnswer405(w, "bad method")
@@ -139,15 +151,15 @@ func writeRecipePrice(mdb store.MDB) http.Handler {
 		rc := r.Body
 		b, err := ioutil.ReadAll(rc)
 		if err != nil {
-			mdb.Log.Error("Error reading querry:", err)
+			s.Log.Error("Error reading querry:", err)
 			sendAnswer400(w, "")
 			return
 		}
 		dataMap := make(map[string]interface{})
 		err = json.Unmarshal(b, &dataMap)
 		if err != nil {
-			mdb.Log.Error("Error unmarshal query: ", err)
-			mdb.Log.Error(string(b))
+			s.Log.Error("Error unmarshal query: ", err)
+			s.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}

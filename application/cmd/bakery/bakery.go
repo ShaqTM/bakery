@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bakery/pkg/service"
+	"bakery/application/internal/service"
 	"fmt"
 	"os"
 	"path/filepath"

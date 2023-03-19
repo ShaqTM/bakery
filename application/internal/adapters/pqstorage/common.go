@@ -1,4 +1,4 @@
-package store
+package pgstorage
 
 import (
 	"database/sql"
@@ -9,8 +9,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//MDB Структура, содержит ссылку на интерфейс к ДБ
-type MDB struct {
+// Storage Структура, содержит ссылку на интерфейс к ДБ
+type Storage struct {
 	Log *logrus.Logger
 	Pdb **sql.DB
 }
@@ -34,12 +34,12 @@ func convertIfNumeric(col string, value interface{}) interface{} {
 	return value
 }
 
-//GetRowQuerry Получение записи по имени таблицы и ID
+// GetRowQuerry Получение записи по имени таблицы и ID
 func GetRowQuerry(tableName string, id int) string {
 	return `SELECT * FROM public.` + tableName + ` WHERE id = ` + strconv.Itoa(id) + `;`
 }
 
-//GetRowsQuerry Получение записей по имени таблицы
+// GetRowsQuerry Получение записей по имени таблицы
 func GetRowsQuerry(tableName string, params map[string]string) string {
 	orderString := ""
 	if params["order"] != "" {
@@ -48,7 +48,7 @@ func GetRowsQuerry(tableName string, params map[string]string) string {
 	return `SELECT * FROM public.` + tableName + orderString + `;`
 }
 
-//UpdateData Запись данных в таблицу
+// UpdateData Запись данных в таблицу
 func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) (int, error) {
 	db := *mdb.Pdb
 	queryText := `SELECT * FROM ` + tableName + ` WHERE false`
@@ -108,7 +108,7 @@ func (mdb MDB) UpdateData(tableName string, data map[string]interface{}) (int, e
 
 }
 
-//UpdateTableData Обновляет данные в табличной части
+// UpdateTableData Обновляет данные в табличной части
 func (mdb MDB) UpdateTableData(tableName string, data []interface{}, id int) error {
 	db := *mdb.Pdb
 	queryText := `SELECT * FROM ` + tableName + ` WHERE false`
@@ -177,7 +177,7 @@ func (mdb MDB) UpdateTableData(tableName string, data []interface{}, id int) err
 	return nil
 }
 
-//DeleteData уделение данных в таблице по id
+// DeleteData удaление данных в таблице по id
 func (mdb MDB) DeleteData(tableName string, id int) error {
 	db := *mdb.Pdb
 	queryText := `DELETE FROM public.` + tableName + ` WHERE id = ` + strconv.Itoa(id) + `;`
@@ -191,7 +191,7 @@ func (mdb MDB) DeleteData(tableName string, id int) error {
 	return nil
 }
 
-//ReadRow Выполняет запрос к SQL и возвращает одну строку в виде map
+// ReadRow Выполняет запрос к SQL и возвращает одну строку в виде map
 func (mdb MDB) ReadRow(queryText string) (map[string]interface{}, error) {
 	data := make(map[string]interface{})
 	db := *mdb.Pdb
@@ -226,7 +226,7 @@ func (mdb MDB) ReadRow(queryText string) (map[string]interface{}, error) {
 	return data, nil
 }
 
-//ReadRows Выполняет запрос к SQL и возвращает строки в виде []map
+// ReadRows Выполняет запрос к SQL и возвращает строки в виде []map
 func (mdb MDB) ReadRows(queryText string) ([]map[string]interface{}, error) {
 
 	dataArray := make([]map[string]interface{}, 0)

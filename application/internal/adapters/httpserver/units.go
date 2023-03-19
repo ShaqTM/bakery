@@ -1,23 +1,32 @@
-package api
+package httpserver
 
 import (
-	"bakery/pkg/store"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
-//AddUnitsRoutes Добавляет обработку роутов
-func AddUnitsRoutes(router **mux.Router, mdb store.MDB) {
-	(*router).Handle("/api/writeunit", writeUnit(mdb)).Methods("POST", "OPTIONS")
-	(*router).Handle("/api/readunits", readUnits(mdb)).Methods("GET", "OPTIONS")
-	(*router).Handle("/api/readunit/", readUnit(mdb)).Methods("GET", "OPTIONS")
+// AddUnitsRoutes Добавляет обработку роутов
+func init() {
+	routes = append(routes, route{
+		Methods: []string{"POST", "OPTIONS"},
+		Path:    "/api/writeunit",
+		Handler: (*Server).writeUnit,
+	})
+	routes = append(routes, route{
+		Methods: []string{"GET", "OPTIONS"},
+		Path:    "/api/readunits",
+		Handler: (*Server).readUnits,
+	})
+	routes = append(routes, route{
+		Methods: []string{"GET", "OPTIONS"},
+		Path:    "/api/readunit/",
+		Handler: (*Server).readUnit,
+	})
 }
 
-func writeUnit(mdb store.MDB) http.Handler {
+func (s *Server) writeUnit() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "POST" {
 		//			sendAnswer405(w, "bad method")
@@ -30,15 +39,15 @@ func writeUnit(mdb store.MDB) http.Handler {
 		rc := r.Body
 		b, err := ioutil.ReadAll(rc)
 		if err != nil {
-			mdb.Log.Error("Error reading querry:", err)
+			s.log.Error("Error reading querry:", err)
 			sendAnswer400(w, err.Error())
 			return
 		}
 		dataMap := make(map[string]interface{})
 		err = json.Unmarshal(b, &dataMap)
 		if err != nil {
-			mdb.Log.Error("Error unmarshal query: ", err)
-			mdb.Log.Error(string(b))
+			s.log.Error("Error unmarshal query: ", err)
+			s.log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -52,7 +61,7 @@ func writeUnit(mdb store.MDB) http.Handler {
 	})
 }
 
-func readUnits(mdb store.MDB) http.Handler {
+func (s *Server) readUnits() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")
@@ -69,8 +78,8 @@ func readUnits(mdb store.MDB) http.Handler {
 		}
 		jsonArray, err := json.Marshal(units)
 		if err != nil {
-			mdb.Log.Error("Error marshal units:", err)
-			mdb.Log.Error(units)
+			s.Log.Error("Error marshal units:", err)
+			s.Log.Error(units)
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -79,7 +88,7 @@ func readUnits(mdb store.MDB) http.Handler {
 	})
 }
 
-func readUnit(mdb store.MDB) http.Handler {
+func (s *Server) readUnit() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")
@@ -96,8 +105,8 @@ func readUnit(mdb store.MDB) http.Handler {
 		}
 		id, err := strconv.Atoi(query["id"][0])
 		if err != nil {
-			mdb.Log.Error("Error reading id:", query["id"][0])
-			mdb.Log.Error(err.Error())
+			s.Log.Error("Error reading id:", query["id"][0])
+			s.Log.Error(err.Error())
 			sendAnswer400(w, err.Error())
 			return
 		}
@@ -108,8 +117,8 @@ func readUnit(mdb store.MDB) http.Handler {
 		}
 		jsonText, err := json.Marshal(unit)
 		if err != nil {
-			mdb.Log.Error("Error marshal unit:", err)
-			mdb.Log.Error(unit)
+			s.Log.Error("Error marshal unit:", err)
+			s.Log.Error(unit)
 			sendAnswer400(w, err.Error())
 			return
 		}

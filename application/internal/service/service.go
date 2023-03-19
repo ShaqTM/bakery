@@ -1,8 +1,8 @@
 package service
 
 import (
-	"bakery/pkg/api"
-	"bakery/pkg/store"
+	"bakery/application/api"
+	"bakery/application/store"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -17,7 +17,7 @@ import (
 
 var elog debug.Log
 
-type myservice struct{ Log *logrus.Logger }
+type MyService struct{ Log *logrus.Logger }
 
 func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
@@ -50,7 +50,7 @@ loop:
 	return
 }
 
-//RunService - Запуск сервиса
+// RunService - Запуск сервиса
 func RunService(name string, log *logrus.Logger) {
 	var err error
 	elog, err = eventlog.Open(name)
@@ -72,7 +72,7 @@ func RunService(name string, log *logrus.Logger) {
 	log.Info(fmt.Sprintf("%s service stopped", name))
 }
 
-//StartServer - запуск web-сервера
+// StartServer - запуск web-сервера
 func StartServer(log *logrus.Logger) {
 	var db *sql.DB
 	mdb := store.MDB{Pdb: &db, Log: log}
