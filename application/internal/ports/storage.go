@@ -1,6 +1,7 @@
 package ports
 
 type Storage interface {
+	Start()
 	ReadMaterials(prices bool) ([]map[string]interface{}, error)
 	ReadMaterial(prices bool, id int) (map[string]interface{}, error)
 

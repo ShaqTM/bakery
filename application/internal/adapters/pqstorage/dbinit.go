@@ -1,4 +1,4 @@
-package store
+package pgstorage
 
 import (
 	"database/sql"
@@ -11,32 +11,32 @@ const dbConnectString = "host=localhost port=5432 user=postgres password=qazplm 
 const dbConnectStringInit = "host=localhost port=5432 user=postgres password=qazplm dbname=postgres sslmode=disable"
 
 //InitDatabase Проверка наличия БД, создание и обновление до последней версии
-func (mdb *MDB) InitDatabase() {
+func (s *Storage) Start() {
 
 	initdb, err := sql.Open("postgres", dbConnectStringInit)
 
 	if err != nil {
-		mdb.Log.Fatalf("Database opening error:", err)
+		s.Log.Fatalf("Database opening error:", err)
 	}
 	defer initdb.Close()
 
 	rows, err := initdb.Query("SELECT datname FROM pg_database WHERE datistemplate = false AND datname = 'bakery';")
 
 	if err != nil {
-		mdb.Log.Fatalf("Error searching database:", err)
+		s.Log.Fatalf("Error searching database:", err)
 	}
 	if rows.Next() {
-		mdb.Log.Info("Database bakery found")
+		s.Log.Info("Database bakery found")
 	} else {
-		createDb(initdb, mdb.Log)
+		createDb(initdb, s.Log)
 	}
-	initdb.Close()
+
 	db, err := sql.Open("postgres", dbConnectString)
 	if err != nil {
-		mdb.Log.Fatalf("Database opening error:", err)
+		s.Log.Fatalf("Database opening error:", err)
 	}
-	updateDb(db, mdb.Log)
-	(*mdb).Pdb = &db
+	updateDb(db, s.Log)
+	s.Pdb = &db
 
 }
 func createDb(db *sql.DB, log *logrus.Logger) {
