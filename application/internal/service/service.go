@@ -88,5 +88,4 @@ func (m *MyService) RunService() {
 func (m *MyService) Start() {
 	m.Storage.Start()
 	m.HttpServer.Start()
-
 }

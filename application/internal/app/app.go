@@ -8,9 +8,7 @@ import (
 )
 
 type App struct {
-	Storage *ports.Storage
 	Service *service.MyService
-	Router  **mux.Router
 }
 
 func CreateApp() *App {
