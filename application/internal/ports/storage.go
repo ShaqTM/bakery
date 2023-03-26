@@ -1,17 +1,22 @@
 package ports
 
+import "bakery/application/internal/domain/models"
+
 type Storage interface {
 	Start()
-	ReadMaterials(prices bool) ([]map[string]interface{}, error)
-	ReadMaterial(prices bool, id int) (map[string]interface{}, error)
+	ReadMaterials(prices bool) ([]models.Material, error)
+	ReadMaterial(prices bool, id int) (models.Material, error)
+	WriteMaterial(data models.Material) (int, error)
 
-	ReadOrders() ([]map[string]interface{}, error)
-	ReadOrderContent(id int) ([]map[string]interface{}, error)
+	ReadOrders() ([]models.Order, error)
+	ReadOrder(id int) ([]models.Order, error)
+	WriteOrder(data models.Order) (int, error)
 
-	ReadRecipe(prices bool, id int) (map[string]interface{}, error)
-	ReadRecipes(prices bool) ([]map[string]interface{}, error)
-	ReadRecipeContent(prices bool, id int) ([]map[string]interface{}, error)
+	ReadRecipe(prices bool, id int) (models.Recipe, error)
+	ReadRecipes(prices bool) ([]models.Recipe, error)
+	WriteRecipe(data models.Recipe) (int, error)
 
-	ReadUnits() ([]map[string]interface{}, error)
-	ReadUnit(id int) (map[string]interface{}, error)
+	ReadUnits() ([]models.Unit, error)
+	ReadUnit(id int) (models.Unit, error)
+	WriteUnit(data models.Unit) (int, error)
 }

@@ -1,25 +1,76 @@
 package pgstorage
 
-import "strconv"
+import (
+	"bakery/application/internal/domain/models"
+	"strconv"
+)
 
-//ReadMaterials читает список материалов
-func (mdb MDB) ReadMaterials(prices bool) ([]map[string]interface{}, error) {
+// ReadMaterials читает список материалов
+func (s *Storage) ReadMaterials(prices bool) ([]map[string]interface{}, error) {
+	queryText := ""
 	if prices {
-		return mdb.ReadRows(GetMaterialsWithPricesQuery())
+		queryText = getMaterialsWithPricesQuery()
+	} else {
+		queryText = getMaterialsQuery()
 	}
-	return mdb.ReadRows(GetMaterialsQuery())
+	materials := make([]models.Material, 0)
+	rows, err := s.Pdb.Query(queryText)
+	if err != nil {
+		s.Log.Error("Error reading data:", err)
+		s.Log.Error("Query:")
+		s.Log.Error(queryText)
+		return nil, err
+	}
+	id := 0
+	name := ""
+	price_unit_id := 0
+	price_unit_name := ""
+	price_unit_short_name := ""
+	recipe_unit_id := 0
+	recipe_unit_name := ""
+	recipe_unit_short_name := ""
+	coefficient := ""
+	price := ""
+	for rows.Next() {
+		if err := rows.Scan(&id, &name, &price_unit_id,
+			&price_unit_name, &price_unit_short_name,
+			&recipe_unit_id, &recipe_unit_name,
+			&recipe_unit_short_name,
+			&coefficient, &price); err != nil {
+			s.Log.Error("Error scanning rows:", err)
+			s.Log.Error("Query:")
+			s.Log.Error(queryText)
+			return nil, err
+		}
+		material := models.Material{
+			Id : id,
+			Name: name,
+			Price_unit_id:price_unit_id,
+			Price_unit_name:price_unit_name ,
+			Price_unit_short_name: price_unit_short_name,
+			Recipe_unit_id: recipe_unit_id,
+			Recipe_unit_name: recipe_unit_name,
+			Recipe_unit_short_name: recipe_unit_short_name,
+		}
+		
+			coefficient := ""
+			price := ""
+				}
+		units = append(units, unit)
+	}
+	return units, nil
 }
 
-//ReadMaterial читает материал по id
-func (mdb MDB) ReadMaterial(prices bool, id int) (map[string]interface{}, error) {
+// ReadMaterial читает материал по id
+func (s *Storage) ReadMaterial(prices bool, id int) (map[string]interface{}, error) {
 	if prices {
 		return mdb.ReadRow(GetMaterialWithPricesQuery(id))
 	}
 	return mdb.ReadRow(GetMaterialQuery(id))
 }
 
-//GetMaterialWithPricesQuery Получение материала с ценой id
-func GetMaterialWithPricesQuery(id int) string {
+// GetMaterialWithPricesQuery Получение материала с ценой id
+func getMaterialWithPricesQuery(id int) string {
 	return `
 	CREATE TEMP TABLE price_periods 
 	ON COMMIT DROP
@@ -70,8 +121,8 @@ func GetMaterialWithPricesQuery(id int) string {
 
 }
 
-//GetMaterialsWithPricesQuery Получение списка материалов с ценой
-func GetMaterialsWithPricesQuery() string {
+// GetMaterialsWithPricesQuery Получение списка материалов с ценой
+func getMaterialsWithPricesQuery() string {
 	return `
 	CREATE TEMP TABLE price_periods 
 	ON COMMIT DROP
@@ -119,8 +170,8 @@ func GetMaterialsWithPricesQuery() string {
 
 }
 
-//GetMaterialQuery Получение материала по id
-func GetMaterialQuery(id int) string {
+// GetMaterialQuery Получение материала по id
+func getMaterialQuery(id int) string {
 	return `
 	SELECT 
 		materials.id,
@@ -131,7 +182,8 @@ func GetMaterialQuery(id int) string {
 		materials.recipe_unit_id,
 		COALESCE(units2.name,'') AS recipe_unit_name,
 		COALESCE(units2.short_name,'') AS recipe_unit_short_name,
-		materials.coefficient
+		materials.coefficient,
+		0 AS price
 	FROM 
 		public.materials AS materials 
 			LEFT JOIN public.units AS units1
@@ -146,8 +198,8 @@ func GetMaterialQuery(id int) string {
 
 }
 
-//GetMaterialsQuery Получение списка материалов
-func GetMaterialsQuery() string {
+// GetMaterialsQuery Получение списка материалов
+func getMaterialsQuery() string {
 	return `
 	SELECT 
 		materials.id,
@@ -158,7 +210,8 @@ func GetMaterialsQuery() string {
 		materials.recipe_unit_id,
 		COALESCE(units2.name,'') AS recipe_unit_name,
 		COALESCE(units2.short_name,'') AS recipe_unit_short_name,
-		materials.coefficient
+		materials.coefficient,
+		0 AS price
 	FROM 
 		public.materials AS materials 
 			LEFT JOIN public.units AS units1

@@ -77,7 +77,7 @@ func (m *MyService) RunService() {
 	run := svc.Run
 	err = run(m.Name, m)
 	if err != nil {
-		elog.Error(1, fmt.Sprintf("%s service failed: %v", name, err))
+		elog.Error(1, fmt.Sprintf("%s service failed: %v", m.Name, err))
 		return
 	}
 	elog.Info(1, fmt.Sprintf("%s service stopped", m.Name))

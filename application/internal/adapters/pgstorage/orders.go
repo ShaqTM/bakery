@@ -1,14 +1,14 @@
-package store
+package pgstorage
 
 import "strconv"
 
 //ReadOrders Читает список заказов
-func (mdb MDB) ReadOrders() ([]map[string]interface{}, error) {
+func (s *Storage) ReadOrders() ([]map[string]interface{}, error) {
 	return mdb.ReadRows(OrdersQuery)
 }
 
 //ReadOrder Читает заказ по id
-func (mdb MDB) ReadOrder(id int) (map[string]interface{}, error) {
+func (s *Storage) ReadOrder(id int) (map[string]interface{}, error) {
 	data, err := mdb.ReadRow(GetOrderQuerry(id))
 	if err != nil {
 		return data, err
@@ -22,7 +22,7 @@ func (mdb MDB) ReadOrder(id int) (map[string]interface{}, error) {
 }
 
 //ReadOrderContent Читает табличную часть заказа
-func (mdb MDB) ReadOrderContent(id int) ([]map[string]interface{}, error) {
+func (s *Storage) ReadOrderContent(id int) ([]map[string]interface{}, error) {
 	return mdb.ReadRows(GetOrderContentQuerry(id))
 }
 
@@ -94,7 +94,7 @@ func GetOrderContentQuerry(id int) string {
 		order_details.cost,
 		units.name AS unit_name,
 		units.short_name AS unit_short_name,
-		by_recipe
+		order_details.by_recipe
 	FROM  
 		public.order_details AS order_details 
 	 		LEFT JOIN public.materials AS materials 

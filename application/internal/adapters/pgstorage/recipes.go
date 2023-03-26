@@ -1,4 +1,4 @@
-package store
+package pgstorage
 
 import "strconv"
 
@@ -11,7 +11,7 @@ func (mdb MDB) ReadRecipes(prices bool) ([]map[string]interface{}, error) {
 }
 
 //ReadRecipe Читает рецепт по id
-func (mdb MDB) ReadRecipe(prices bool, id int) (map[string]interface{}, error) {
+func (s *Storage) ReadRecipe(prices bool, id int) (map[string]interface{}, error) {
 	queryText := ""
 	if prices {
 		queryText = GetRecipeWithPriceQuerry(id)
@@ -32,7 +32,7 @@ func (mdb MDB) ReadRecipe(prices bool, id int) (map[string]interface{}, error) {
 }
 
 //ReadRecipeContent Читает табличную часть рецепта по id
-func (mdb MDB) ReadRecipeContent(prices bool, id int) ([]map[string]interface{}, error) {
+func (s *Storage) ReadRecipeContent(prices bool, id int) ([]map[string]interface{}, error) {
 	if prices {
 		return mdb.ReadRows(GetRecipeContentWithPricesQuery(id))
 	}

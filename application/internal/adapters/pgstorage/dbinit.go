@@ -10,7 +10,7 @@ import (
 const dbConnectString = "host=localhost port=5432 user=postgres password=qazplm dbname=bakery sslmode=disable"
 const dbConnectStringInit = "host=localhost port=5432 user=postgres password=qazplm dbname=postgres sslmode=disable"
 
-//InitDatabase Проверка наличия БД, создание и обновление до последней версии
+// InitDatabase Проверка наличия БД, создание и обновление до последней версии
 func (s *Storage) Start() {
 
 	initdb, err := sql.Open("postgres", dbConnectStringInit)
@@ -31,12 +31,11 @@ func (s *Storage) Start() {
 		createDb(initdb, s.Log)
 	}
 
-	db, err := sql.Open("postgres", dbConnectString)
+	s.Pdb, err = sql.Open("postgres", dbConnectString)
 	if err != nil {
 		s.Log.Fatalf("Database opening error:", err)
 	}
-	updateDb(db, s.Log)
-	s.Pdb = &db
+	s.updateDb()
 
 }
 func createDb(db *sql.DB, log *logrus.Logger) {
@@ -48,18 +47,18 @@ func createDb(db *sql.DB, log *logrus.Logger) {
 
 }
 
-func updateDb(db *sql.DB, log *logrus.Logger) {
+func (s *Storage) updateDb() {
 	var dbVersion int
 	dbVersion = -1
-	rows, err := db.Query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings'")
+	rows, err := s.Pdb.Query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings'")
 	if err != nil {
-		log.Fatalf("Error searching table settings:", err)
+		s.Log.Fatalf("Error searching table settings:", err)
 	}
 	if rows.Next() {
-		log.Info("Table settings found")
-		dbVersion = getDbVersion(db, log)
+		s.Log.Info("Table settings found")
+		dbVersion = s.getDbVersion()
 	} else {
-		_, err = db.Exec(`CREATE TABLE IF NOT EXISTS public.settings(
+		_, err = s.Pdb.Exec(`CREATE TABLE IF NOT EXISTS public.settings(
 			name varchar(50) not null,
 			string_value varchar(200),
 			numeric_value numeric(15,3),
@@ -67,51 +66,50 @@ func updateDb(db *sql.DB, log *logrus.Logger) {
 			time_value timestamp,
 			constraint name_data primary key (name));`)
 		if err != nil {
-			log.Fatalf("Table settings create error", err)
+			s.Log.Fatalf("Table settings create error", err)
 		}
 	}
 	if dbVersion < 0 {
-		updateDbToVerion0(db, log)
+		s.updateDbToVerion0()
 	}
 	if dbVersion < 1 {
-		updateDbToVerion1(db, log)
+		s.updateDbToVerion1()
 	}
 	if dbVersion < 2 {
-		updateDbToVerion2(db, log)
+		s.updateDbToVerion2()
 	}
 }
-func getDbVersion(db *sql.DB, log *logrus.Logger) int {
-	rows, err := db.Query(`SELECT integer_Value FROM public.settings WHERE name = 'dbVersion'`)
+func (s *Storage) getDbVersion() int {
+	rows, err := s.Pdb.Query(`SELECT integer_Value FROM public.settings WHERE name = 'dbVersion'`)
 	if err != nil {
-		log.Fatalf("Error qetting dbVersion data: ", err)
+		s.Log.Fatalf("Error qetting dbVersion data: ", err)
 	}
 	var version int
 	version = -1
 	if rows.Next() {
 		err = rows.Scan(&version)
 		if err != nil {
-			log.Fatalf("Error scanning dbVersion data: ", err)
+			s.Log.Fatalf("Error scanning dbVersion data: ", err)
 		}
 	}
 	return version
 }
 
-func setDbVersion(version float32, db *sql.DB, log *logrus.Logger) {
+func (s *Storage) setDbVersion(version float32) {
 	insertString := ""
-	if getDbVersion(db, log) == -1 {
-
+	if s.getDbVersion() == -1 {
 		insertString = `INSERT INTO public.settings(name, integer_Value) VALUES ($1,$2);`
 	} else {
 		insertString = `UPDATE public.settings SET integer_Value =$2 WHERE name = $1;`
 	}
-	_, err := db.Exec(insertString, "dbVersion", version)
+	_, err := s.Pdb.Exec(insertString, "dbVersion", version)
 
 	if err != nil {
-		log.Fatalf("Error inserting dbVersion data: ", err)
+		s.Log.Fatalf("Error inserting dbVersion data: ", err)
 	}
 }
 
-func updateDbToVerion0(db *sql.DB, log *logrus.Logger) {
+func (s *Storage) updateDbToVerion0() {
 	initTableString := `
 	CREATE TABLE public.units(
 		id serial,
@@ -170,35 +168,35 @@ func updateDbToVerion0(db *sql.DB, log *logrus.Logger) {
 		price numeric(15,2) not null,
 		cost numeric(15,2));
 		 `
-	_, err := db.Exec(initTableString)
+	_, err := s.Pdb.Exec(initTableString)
 	if err != nil {
-		log.Fatalf("Error creating tables:", err)
+		s.Log.Fatalf("Error creating tables:", err)
 		panic("Error creating tables")
 	}
-	setDbVersion(0, db, log)
+	s.setDbVersion(0)
 
 }
 
-func updateDbToVerion1(db *sql.DB, log *logrus.Logger) {
+func (s *Storage) updateDbToVerion1() {
 	initTableString := `
 	ALTER TABLE public.order_details ADD COLUMN by_recipe boolean;
 		 `
-	_, err := db.Exec(initTableString)
+	_, err := s.Pdb.Exec(initTableString)
 	if err != nil {
-		log.Fatalf("Error updating tables to version 1:", err)
+		s.Log.Fatalf("Error updating tables to version 1:", err)
 	}
-	setDbVersion(1, db, log)
+	s.setDbVersion(1)
 
 }
 
-func updateDbToVerion2(db *sql.DB, log *logrus.Logger) {
+func (s *Storage) updateDbToVerion2() {
 	initTableString := `
 	ALTER TABLE public.order_details ALTER COLUMN price SET DATA TYPE numeric(15,4);
 		 `
-	_, err := db.Exec(initTableString)
+	_, err := s.Pdb.Exec(initTableString)
 	if err != nil {
-		log.Fatalf("Error updating tables to version 2:", err)
+		s.Log.Fatalf("Error updating tables to version 2:", err)
 	}
-	setDbVersion(2, db, log)
+	s.setDbVersion(2)
 
 }
