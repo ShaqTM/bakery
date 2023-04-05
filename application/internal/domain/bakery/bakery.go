@@ -8,13 +8,13 @@ import (
 )
 
 type Bakery struct {
-	Storage *ports.Storage
+	Storage ports.Storage
 	Log     *logrus.Logger
 }
 
 func New(log *logrus.Logger, storage ports.Storage) *Bakery {
 	b := &Bakery{
-		Storage: ports.Storage,
+		Storage: storage,
 		Log:     log,
 	}
 	return b
@@ -31,13 +31,17 @@ func (b *Bakery) WriteMaterial(data models.Material) (int, error) {
 	return b.Storage.WriteMaterial(data)
 }
 
+func (b *Bakery) WriteMaterialPrice(data models.Material_price) (int, error) {
+	return b.Storage.WriteMaterialPrice(data)
+}
+
 func (b *Bakery) ReadOrders() ([]models.Order, error) {
 	return b.Storage.ReadOrders()
 }
-func (b *Bakery) ReadOrder(id int) ([]models.Order, error) {
+func (b *Bakery) ReadOrder(id int) (models.Order, error) {
 	return b.Storage.ReadOrder(id)
 }
-func (b *Bakery) WriteOrder(data models.Order) (int, eror) {
+func (b *Bakery) WriteOrder(data models.Order) (int, error) {
 	return b.Storage.WriteOrder(data)
 }
 
@@ -49,6 +53,10 @@ func (b *Bakery) ReadRecipes(prices bool) ([]models.Recipe, error) {
 }
 func (b *Bakery) WriteRecipe(data models.Recipe) (int, error) {
 	return b.Storage.WriteRecipe(data)
+}
+
+func (b *Bakery) WriteRecipePrice(data models.Recipe_price) (int, error) {
+	return b.Storage.WriteRecipePrice(data)
 }
 
 func (b *Bakery) ReadUnits() ([]models.Unit, error) {

@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"bakery/application/internal/domain/models"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -39,19 +40,19 @@ func (s *Server) writeUnit() http.Handler {
 		rc := r.Body
 		b, err := ioutil.ReadAll(rc)
 		if err != nil {
-			s.log.Error("Error reading querry:", err)
+			s.Log.Error("Error reading querry:", err)
 			sendAnswer400(w, err.Error())
 			return
 		}
-		dataMap := make(map[string]interface{})
-		err = json.Unmarshal(b, &dataMap)
+		unit := models.Unit{}
+		err = json.Unmarshal(b, &unit)
 		if err != nil {
-			s.log.Error("Error unmarshal query: ", err)
-			s.log.Error(string(b))
+			s.Log.Error("Error unmarshal query: ", err)
+			s.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
-		id, err := mdb.UpdateData("units", dataMap)
+		id, err := s.Bakery.WriteUnit(unit)
 		if err == nil {
 			sendAnswer202(w, strconv.Itoa(id))
 		} else {
@@ -71,7 +72,7 @@ func (s *Server) readUnits() http.Handler {
 			sendAnswer200(w, "")
 			return
 		}
-		units, err := mdb.ReadUnits()
+		units, err := s.Bakery.ReadUnits()
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
@@ -110,7 +111,7 @@ func (s *Server) readUnit() http.Handler {
 			sendAnswer400(w, err.Error())
 			return
 		}
-		unit, err := mdb.ReadUnit(id)
+		unit, err := s.Bakery.ReadUnit(id)
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return

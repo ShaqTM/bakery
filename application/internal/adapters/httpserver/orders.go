@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"bakery/application/internal/domain/models"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -43,25 +44,19 @@ func (s *Server) writeOrder() http.Handler {
 			sendAnswer400(w, err.Error())
 			return
 		}
-		dataMap := make(map[string]interface{})
-		err = json.Unmarshal(b, &dataMap)
+		order := models.Order{}
+		err = json.Unmarshal(b, &order)
 		if err != nil {
 			s.Log.Error("Error unmarshal query: ", err)
 			s.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
-		id, err := mdb.UpdateData("orders", dataMap)
+		id, err := s.Bakery.WriteOrder(order)
 		if err != nil {
 			sendAnswer400(w, err.Error())
 			return
 		}
-		err = mdb.UpdateTableData("order_details", dataMap["content"].([]interface{}), id)
-		if err != nil {
-			sendAnswer400(w, err.Error())
-			return
-		}
-
 		sendAnswer202(w, strconv.Itoa(id))
 	})
 }
@@ -76,7 +71,7 @@ func (s *Server) readOrders() http.Handler {
 			sendAnswer200(w, "")
 			return
 		}
-		orders, err := mdb.ReadOrders()
+		orders, err := s.Bakery.ReadOrders()
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
@@ -110,20 +105,20 @@ func (s *Server) readOrder() http.Handler {
 		}
 		id, err := strconv.Atoi(query["id"][0])
 		if err != nil {
-			mdb.Log.Error("Error reading id:", query["id"][0])
-			mdb.Log.Error(err.Error())
+			s.Log.Error("Error reading id:", query["id"][0])
+			s.Log.Error(err.Error())
 			sendAnswer400(w, err.Error())
 			return
 		}
-		order, err := mdb.ReadOrder(id)
+		order, err := s.Bakery.ReadOrder(id)
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
 		}
 		jsonText, err := json.Marshal(order)
 		if err != nil {
-			mdb.Log.Error("Error marshal order:", err)
-			mdb.Log.Error(order)
+			s.Log.Error("Error marshal order:", err)
+			s.Log.Error(order)
 			sendAnswer400(w, err.Error())
 			return
 		}

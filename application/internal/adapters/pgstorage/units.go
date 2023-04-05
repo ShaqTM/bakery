@@ -79,11 +79,12 @@ func (s *Storage) ReadUnit(id int) (models.Unit, error) {
 }
 
 func (s *Storage) WriteUnit(unit models.Unit) (int, error) {
-	newRecord := unit.Id == 0
+	s.Log.Info("Writing unit", unit)
+	newRecord := unit.Id == -1
 	if newRecord {
 		lastInsertID := -1
 		queryText := `INSERT INTO public.units (name, short_name)
-					 VALUES($2,$3) RETURNING id;`
+					 VALUES($1,$2) RETURNING id;`
 		err := s.Pdb.QueryRow(queryText, unit.Name, unit.Short_name).Scan(&lastInsertID)
 		if err != nil {
 			s.Log.Error("Error inserting data:", err)
@@ -94,9 +95,8 @@ func (s *Storage) WriteUnit(unit models.Unit) (int, error) {
 		}
 		return lastInsertID, nil
 	} else {
-		queryText := `INSERT INTO public.units (id,	name, short_name)
-						 VALUES($1,$2,$3) RETURNING id;`
-		_, err := s.Pdb.Exec(queryText, unit.Id, unit.Name, unit.Short_name)
+		queryText := `UPDATE public.units SET(name, short_name)=($1,$2) WHERE id = ` + strconv.Itoa(unit.Id) + `;`
+		_, err := s.Pdb.Exec(queryText, unit.Name, unit.Short_name)
 		if err != nil {
 			s.Log.Error("Error updating data:", err)
 			s.Log.Error("Query:")

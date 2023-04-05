@@ -3,10 +3,11 @@ package pgstorage
 import (
 	"bakery/application/internal/domain/models"
 	"strconv"
+	"time"
 )
 
 // ReadMaterials читает список материалов
-func (s *Storage) ReadMaterials(prices bool) ([]map[string]interface{}, error) {
+func (s *Storage) ReadMaterials(prices bool) ([]models.Material, error) {
 	queryText := ""
 	if prices {
 		queryText = getMaterialsWithPricesQuery()
@@ -21,52 +22,106 @@ func (s *Storage) ReadMaterials(prices bool) ([]map[string]interface{}, error) {
 		s.Log.Error(queryText)
 		return nil, err
 	}
-	id := 0
-	name := ""
-	price_unit_id := 0
-	price_unit_name := ""
-	price_unit_short_name := ""
-	recipe_unit_id := 0
-	recipe_unit_name := ""
-	recipe_unit_short_name := ""
 	coefficient := ""
 	price := ""
 	for rows.Next() {
-		if err := rows.Scan(&id, &name, &price_unit_id,
-			&price_unit_name, &price_unit_short_name,
-			&recipe_unit_id, &recipe_unit_name,
-			&recipe_unit_short_name,
+		material := models.Material{}
+		if err := rows.Scan(&material.Id, &material.Name, &material.Price_unit_id,
+			&material.Price_unit_name, &material.Price_unit_short_name,
+			&material.Recipe_unit_id, &material.Recipe_unit_name,
+			&material.Recipe_unit_short_name,
 			&coefficient, &price); err != nil {
 			s.Log.Error("Error scanning rows:", err)
 			s.Log.Error("Query:")
 			s.Log.Error(queryText)
 			return nil, err
 		}
-		material := models.Material{
-			Id : id,
-			Name: name,
-			Price_unit_id:price_unit_id,
-			Price_unit_name:price_unit_name ,
-			Price_unit_short_name: price_unit_short_name,
-			Recipe_unit_id: recipe_unit_id,
-			Recipe_unit_name: recipe_unit_name,
-			Recipe_unit_short_name: recipe_unit_short_name,
-		}
-		
-			coefficient := ""
-			price := ""
-				}
-		units = append(units, unit)
+		material.Coefficient = convertNumeric(coefficient)
+		material.Price = convertNumeric(price)
+		materials = append(materials, material)
 	}
-	return units, nil
+	return materials, nil
 }
 
 // ReadMaterial читает материал по id
-func (s *Storage) ReadMaterial(prices bool, id int) (map[string]interface{}, error) {
+func (s *Storage) ReadMaterial(prices bool, id int) (models.Material, error) {
+	queryText := ""
 	if prices {
-		return mdb.ReadRow(GetMaterialWithPricesQuery(id))
+		queryText = getMaterialWithPricesQuery(id)
+	} else {
+		queryText = getMaterialQuery(id)
 	}
-	return mdb.ReadRow(GetMaterialQuery(id))
+	rows, err := s.Pdb.Query(queryText)
+	material := models.Material{}
+	if err != nil {
+		s.Log.Error("Error reading data:", err)
+		s.Log.Error("Query:")
+		s.Log.Error(queryText)
+		return models.Material{}, err
+	}
+	coefficient := ""
+	price := ""
+	if rows.Next() {
+
+		if err := rows.Scan(&material.Id, &material.Name, &material.Price_unit_id,
+			&material.Price_unit_name, &material.Price_unit_short_name,
+			&material.Recipe_unit_id, &material.Recipe_unit_name,
+			&material.Recipe_unit_short_name,
+			&coefficient, &price); err != nil {
+			s.Log.Error("Error scanning rows:", err)
+			s.Log.Error("Query:")
+			s.Log.Error(queryText)
+			return models.Material{}, err
+		}
+		material.Coefficient = convertNumeric(coefficient)
+		material.Price = convertNumeric(price)
+	}
+	return material, nil
+}
+
+func (s *Storage) WriteMaterial(material models.Material) (int, error) {
+	newRecord := material.Id == -1
+	lastInsertID := -1
+	if newRecord {
+		queryText := `INSERT INTO public.materials (name,recipe_unit_id,price_unit_id,coefficient)
+									 VALUES($1,$2,$3,$4) RETURNING id;`
+		err := s.Pdb.QueryRow(queryText, material.Name, material.Recipe_unit_id, material.Price_unit_id, material.Coefficient).Scan(&lastInsertID)
+		if err != nil {
+			s.Log.Error("Error inserting data:", err)
+			s.Log.Error("Query:")
+			s.Log.Error(queryText)
+			s.Log.Error(material)
+			return -1, err
+		}
+	} else {
+		queryText := `UPDATE public.materials SET (name,recipe_unit_id,price_unit_id,coefficient) = ($1,$2,$3,$4) WHERE id = ` + strconv.Itoa(material.Id) + `;`
+		_, err := s.Pdb.Exec(queryText, material.Name, material.Recipe_unit_id, material.Price_unit_id, material.Coefficient)
+		if err != nil {
+			s.Log.Error("Error updating data:", err)
+			s.Log.Error("Query:")
+			s.Log.Error(queryText)
+			s.Log.Error(material)
+			return -1, err
+		}
+		lastInsertID = material.Id
+	}
+	return lastInsertID, nil
+}
+
+func (s *Storage) WriteMaterialPrice(material_price models.Material_price) (int, error) {
+	lastInsertID := -1
+	queryText := `INSERT INTO public.material_prices (material_id,date,price)
+	VALUES($1,$2,$3) RETURNING id;`
+	err := s.Pdb.QueryRow(queryText, material_price.Material_id, time.Now(), material_price.Price).Scan(&lastInsertID)
+	if err != nil {
+		s.Log.Error("Error inserting data:", err)
+		s.Log.Error("Query:")
+		s.Log.Error(queryText)
+		s.Log.Error(material_price)
+		return -1, err
+	}
+	return lastInsertID, nil
+
 }
 
 // GetMaterialWithPricesQuery Получение материала с ценой id

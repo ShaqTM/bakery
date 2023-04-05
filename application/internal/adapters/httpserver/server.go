@@ -41,10 +41,12 @@ func New(cfg *config.Config, b *bakery.Bakery, log *logrus.Logger) *Server {
 }
 
 func (s *Server) addRoutes() http.Handler {
+	s.Log.Info("Routes", routes)
 	router := *mux.NewRouter()
 	for _, mRoute := range routes {
 		router.Handle(mRoute.Path, mRoute.Handler(s)).Methods(mRoute.Methods...)
 	}
+	router.Use(s.loggingMiddleware)
 	return &router
 }
 
@@ -60,4 +62,13 @@ func (s *Server) Start() {
 
 func (s *Server) Stop(ctx context.Context) error {
 	return s.Server.Shutdown(ctx)
+}
+
+func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Do stuff here
+		s.Log.Info(r.RequestURI, " ", r.Method)
+		// Call the next handler, which can be another middleware in the chain, or the final handler.
+		next.ServeHTTP(w, r)
+	})
 }

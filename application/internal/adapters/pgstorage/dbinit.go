@@ -7,13 +7,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const dbConnectString = "host=localhost port=5432 user=postgres password=qazplm dbname=bakery sslmode=disable"
-const dbConnectStringInit = "host=localhost port=5432 user=postgres password=qazplm dbname=postgres sslmode=disable"
-
 // InitDatabase Проверка наличия БД, создание и обновление до последней версии
 func (s *Storage) Start() {
 
-	initdb, err := sql.Open("postgres", dbConnectStringInit)
+	initdb, err := sql.Open("postgres", s.config.PG_connect_string_init)
 
 	if err != nil {
 		s.Log.Fatalf("Database opening error:", err)
@@ -31,7 +28,7 @@ func (s *Storage) Start() {
 		createDb(initdb, s.Log)
 	}
 
-	s.Pdb, err = sql.Open("postgres", dbConnectString)
+	s.Pdb, err = sql.Open("postgres", s.config.PG_connect_string)
 	if err != nil {
 		s.Log.Fatalf("Database opening error:", err)
 	}

@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"bakery/application/internal/domain/models"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -8,11 +9,6 @@ import (
 )
 
 func init() {
-	routes = append(routes, route{
-		Methods: []string{"POST", "OPTIONS"},
-		Path:    "/api/writematerial",
-		Handler: (*Server).writeMaterial,
-	})
 	routes = append(routes, route{
 		Methods: []string{"GET", "OPTIONS"},
 		Path:    "/api/readmaterials",
@@ -25,9 +21,15 @@ func init() {
 	})
 	routes = append(routes, route{
 		Methods: []string{"POST", "OPTIONS"},
-		Path:    "/api/writematerialprice/",
+		Path:    "/api/writematerialprice",
 		Handler: (*Server).writeMaterialPrice,
 	})
+	routes = append(routes, route{
+		Methods: []string{"POST", "OPTIONS"},
+		Path:    "/api/writematerial",
+		Handler: (*Server).writeMaterial,
+	})
+
 }
 
 func (s *Server) writeMaterial() http.Handler {
@@ -47,15 +49,15 @@ func (s *Server) writeMaterial() http.Handler {
 			sendAnswer400(w, "")
 			return
 		}
-		dataMap := make(map[string]interface{})
-		err = json.Unmarshal(b, &dataMap)
+		material := models.Material{}
+		err = json.Unmarshal(b, &material)
 		if err != nil {
 			s.Log.Error("Error unmarshal query")
 			s.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
-		id, err := mdb.UpdateData("materials", dataMap)
+		id, err := s.Bakery.WriteMaterial(material)
 		if err == nil {
 			sendAnswer202(w, strconv.Itoa(id))
 		} else {
@@ -77,7 +79,7 @@ func (s *Server) readMaterials() http.Handler {
 		}
 		query := r.URL.Query()
 		withPrice := query["price"] != nil && query["price"][0] == "true"
-		materials, err := mdb.ReadMaterials(withPrice)
+		materials, err := s.Bakery.ReadMaterials(withPrice)
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
@@ -115,7 +117,7 @@ func (s *Server) readMaterial() http.Handler {
 			sendAnswer400(w, err.Error())
 			return
 		}
-		material, err := mdb.ReadMaterial(withPrice, id)
+		material, err := s.Bakery.ReadMaterial(withPrice, id)
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
@@ -149,15 +151,15 @@ func (s *Server) writeMaterialPrice() http.Handler {
 			sendAnswer400(w, err.Error())
 			return
 		}
-		dataMap := make(map[string]interface{})
-		err = json.Unmarshal(b, &dataMap)
+		material_price := models.Material_price{}
+		err = json.Unmarshal(b, &material_price)
 		if err != nil {
 			s.Log.Error("Error unmarshal query: ", err)
 			s.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
-		id, err := mdb.UpdateData("material_prices", dataMap)
+		id, err := s.Bakery.WriteMaterialPrice(material_price)
 		if err == nil {
 			sendAnswer202(w, strconv.Itoa(id))
 		} else {

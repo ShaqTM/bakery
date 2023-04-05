@@ -36,7 +36,7 @@ func exePath() (string, error) {
 }
 
 //InstallService - удалить сервис
-func InstallService(name, desc string) error {
+func (service *MyService) InstallService(desc string) error {
 	exepath, err := exePath()
 	if err != nil {
 		return err
@@ -46,17 +46,17 @@ func InstallService(name, desc string) error {
 		return err
 	}
 	defer m.Disconnect()
-	s, err := m.OpenService(name)
+	s, err := m.OpenService(service.Name)
 	if err == nil {
 		s.Close()
-		return fmt.Errorf("service %s already exists", name)
+		return fmt.Errorf("service %s already exists", service.Name)
 	}
-	s, err = m.CreateService(name, exepath, mgr.Config{DisplayName: desc, StartType: mgr.StartAutomatic}, "is", "auto-started")
+	s, err = m.CreateService(service.Name, exepath, mgr.Config{DisplayName: desc, StartType: mgr.StartAutomatic}, "is", "auto-started")
 	if err != nil {
 		return err
 	}
 	defer s.Close()
-	err = eventlog.InstallAsEventCreate(name, eventlog.Error|eventlog.Warning|eventlog.Info)
+	err = eventlog.InstallAsEventCreate(service.Name, eventlog.Error|eventlog.Warning|eventlog.Info)
 	if err != nil {
 		s.Delete()
 		return fmt.Errorf("SetupEventLogSource() failed: %s", err)
@@ -65,22 +65,22 @@ func InstallService(name, desc string) error {
 }
 
 //RemoveService - удалить сервис
-func RemoveService(name string) error {
+func (service *MyService) RemoveService() error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err
 	}
 	defer m.Disconnect()
-	s, err := m.OpenService(name)
+	s, err := m.OpenService(service.Name)
 	if err != nil {
-		return fmt.Errorf("service %s is not installed", name)
+		return fmt.Errorf("service %s is not installed", service.Name)
 	}
 	defer s.Close()
 	err = s.Delete()
 	if err != nil {
 		return err
 	}
-	err = eventlog.Remove(name)
+	err = eventlog.Remove(service.Name)
 	if err != nil {
 		return fmt.Errorf("RemoveEventLogSource() failed: %s", err)
 	}

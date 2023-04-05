@@ -1,6 +1,7 @@
 package pgstorage
 
 import (
+	"bakery/application/internal/config"
 	"database/sql"
 	"fmt"
 	"strconv"
@@ -10,13 +11,15 @@ import (
 
 // Storage Структура, содержит ссылку на интерфейс к ДБ
 type Storage struct {
-	Log *logrus.Logger
-	Pdb *sql.DB
+	Log    *logrus.Logger
+	Pdb    *sql.DB
+	config *config.Config
 }
 
-func New(log *logrus.Logger) *Storage {
+func New(log *logrus.Logger, config *config.Config) *Storage {
 	s := &Storage{
-		Log: log,
+		Log:    log,
+		config: config,
 	}
 	return s
 }

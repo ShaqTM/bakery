@@ -1,0 +1,6 @@
+
+SERVER_PORT: '5000'
+SERVER_ADDR: 0.0.0.0
+PG_CONNECT_STRING: host=localhost port=5432 user=postgres password=342678 dbname=bakery sslmode=disable
+PG_CONNECT_STRING_INIT: host=localhost port=5432 user=postgres password=342678 dbname=postgres sslmode=disable
+SERVICE_NAME: Bakery

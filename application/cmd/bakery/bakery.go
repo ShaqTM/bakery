@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bakery/application/internal/service"
+	"bakery/application/internal/app"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,8 +12,6 @@ import (
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/eventlog"
 )
-
-var log = logrus.New()
 
 func usage(errmsg string) {
 	fmt.Fprintf(os.Stderr,
@@ -26,22 +24,23 @@ func usage(errmsg string) {
 }
 func main() {
 
-	const svcName = "bakery"
-
+	log := logrus.New()
 	inService, err := svc.IsWindowsService()
 	if err != nil {
 		log.Fatalf("failed to determine if we are running in service: %v", err)
 	}
+	app := app.New(inService, log)
 	if inService {
+
 		dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-		logfile := "bakery.log"
+		logfile := app.Service.Name + ".log"
 		if err == nil {
 			logfile = dir + `\` + logfile
 		}
 		fmt.Println(dir)
 		f, err := os.OpenFile(logfile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
 		if err != nil {
-			elog, elogErr := eventlog.Open(svcName)
+			elog, elogErr := eventlog.Open(app.Service.Name)
 			if elogErr != nil {
 				return
 			}
@@ -52,19 +51,10 @@ func main() {
 		defer f.Close()
 		// Output to stderr instead of stdout, could also be a file.
 		log.SetOutput(f)
-		service.RunService(svcName, log)
+		app.Start()
 		return
 	} else {
 		log.SetOutput(os.Stdout)
-		//		f, err := os.OpenFile("logfile.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
-		//		if err != nil {
-		//			fmt.Println("error opening file: ", err)
-		//			return
-		//		}
-		//		defer f.Close()
-		// Output to stderr instead of stdout, could also be a file.
-		//		log.SetOutput(f)
-
 	}
 	log.Info("Started")
 	if len(os.Args) < 2 {
@@ -74,31 +64,31 @@ func main() {
 	cmd := strings.ToLower(os.Args[1])
 	switch cmd {
 	case "run":
-		service.StartServer(log)
+		app.Start()
 		for {
 			//		time.Sleep(10 * time.Second) // or runtime.Gosched() or similar per @misterbee
 		}
 	case "install":
-		err = service.InstallService(svcName, "Bakery backend service")
+		err = app.Service.InstallService("Bakery backend service")
 	case "remove":
-		err = service.RemoveService(svcName)
+		err = app.Service.RemoveService()
 	case "start":
-		err = service.StartService(svcName)
+		err = app.Service.StartService()
 		if err == nil {
 			log.Info("Service stared")
 		}
 	case "stop":
-		err = service.ControlService(svcName, svc.Stop, svc.Stopped)
+		err = app.Service.ControlService(svc.Stop, svc.Stopped)
 		if err == nil {
 			log.Info("Service stopped")
 		}
 	case "pause":
-		err = service.ControlService(svcName, svc.Pause, svc.Paused)
+		err = app.Service.ControlService(svc.Pause, svc.Paused)
 		if err == nil {
 			log.Info("Service paused")
 		}
 	case "continue":
-		err = service.ControlService(svcName, svc.Continue, svc.Running)
+		err = app.Service.ControlService(svc.Continue, svc.Running)
 		if err == nil {
 			log.Info("Service continued")
 		}
@@ -106,7 +96,7 @@ func main() {
 		usage(fmt.Sprintf("invalid command %s", cmd))
 	}
 	if err != nil {
-		log.Fatalf("failed to %s %s: %v", cmd, svcName, err)
+		log.Fatalf("failed to %s %s: %v", cmd, app.Service.Name, err)
 	}
 	return
 

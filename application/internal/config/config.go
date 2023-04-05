@@ -10,8 +10,11 @@ import (
 )
 
 type Config struct {
-	Server_port string `yaml:"server_port"`
-	Server_addr string `yaml:"server_addr"`
+	Server_port            string `yaml:"SERVER_PORT"`
+	Server_addr            string `yaml:"SERVER_ADDR"`
+	PG_connect_string      string `yaml:"PG_CONNECT_STRING"`
+	PG_connect_string_init string `yaml:"PG_CONNECT_STRING_INIT"`
+	Service_name           string `yaml:"SERVICE_NAME"`
 }
 
 func ReadConfig() *Config {
@@ -27,6 +30,5 @@ func ReadConfig() *Config {
 		log.Fatalf("Error reading config file: %s", err.Error())
 		return &Config{}
 	}
-
 	return &config
 }

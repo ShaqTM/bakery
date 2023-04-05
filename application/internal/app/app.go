@@ -23,15 +23,16 @@ func New(inService bool, log *logrus.Logger) *App {
 		InService: inService,
 	}
 	logger := logrus.New()
-	storage := pgstorage.New()
+	config := config.ReadConfig()
+	storage := pgstorage.New(logger, config)
 	mBakery := bakery.New(logger, storage)
-	mHttpserver := httpserver.New(config.ReadConfig(), mBakery, logger)
+	mHttpserver := httpserver.New(config, mBakery, logger)
 	app.Httpserver = mHttpserver
 	app.Storage = storage
 	if inService {
 		app.Service = service.New(mHttpserver, logger, storage, "bakery")
 	}
-
+	return &app
 }
 
 func (app *App) Start() {

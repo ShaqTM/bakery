@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"bakery/application/internal/domain/models"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -48,15 +49,15 @@ func (s *Server) writeRecipe() http.Handler {
 			sendAnswer400(w, err.Error())
 			return
 		}
-		dataMap := make(map[string]interface{})
-		err = json.Unmarshal(b, &dataMap)
+		recipe := models.Recipe{}
+		err = json.Unmarshal(b, &recipe)
 		if err != nil {
 			s.Log.Error("Error unmarshal query: ", err.Error())
 			s.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
-		id, err := mdb.UpdateData("recipes", dataMap)
+		id, err := s.Bakery.WriteRecipe(recipe)
 		if err != nil {
 			sendAnswer400(w, err.Error())
 		}
@@ -76,7 +77,7 @@ func (s *Server) readRecipes() http.Handler {
 		}
 		query := r.URL.Query()
 		withPrice := query["price"] != nil && query["price"][0] == "true"
-		recipes, err := mdb.ReadRecipes(withPrice)
+		recipes, err := s.Bakery.ReadRecipes(withPrice)
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
@@ -116,7 +117,7 @@ func (s *Server) readRecipe() http.Handler {
 			sendAnswer400(w, err.Error())
 			return
 		}
-		recipe, err := mdb.ReadRecipe(withPrice, id)
+		recipe, err := s.Bakery.ReadRecipe(withPrice, id)
 		if err != nil {
 			sendAnswer405(w, err.Error())
 			return
@@ -150,15 +151,15 @@ func (s *Server) writeRecipePrice() http.Handler {
 			sendAnswer400(w, "")
 			return
 		}
-		dataMap := make(map[string]interface{})
-		err = json.Unmarshal(b, &dataMap)
+		recipe_price := models.Recipe_price{}
+		err = json.Unmarshal(b, &recipe_price)
 		if err != nil {
 			s.Log.Error("Error unmarshal query: ", err)
 			s.Log.Error(string(b))
 			sendAnswer400(w, err.Error())
 			return
 		}
-		id, err := mdb.UpdateData("recipe_prices", dataMap)
+		id, err := s.Bakery.WriteRecipePrice(recipe_price)
 		if err == nil {
 			sendAnswer202(w, strconv.Itoa(id))
 		} else {

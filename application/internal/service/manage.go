@@ -9,13 +9,13 @@ import (
 )
 
 //StartService - установка сервиса
-func StartService(name string) error {
+func (service *MyService) StartService() error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err
 	}
 	defer m.Disconnect()
-	s, err := m.OpenService(name)
+	s, err := m.OpenService(service.Name)
 	if err != nil {
 		return fmt.Errorf("could not access service: %v", err)
 	}
@@ -28,13 +28,13 @@ func StartService(name string) error {
 }
 
 //ControlService - контроль сервиса
-func ControlService(name string, c svc.Cmd, to svc.State) error {
+func (service *MyService) ControlService(c svc.Cmd, to svc.State) error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err
 	}
 	defer m.Disconnect()
-	s, err := m.OpenService(name)
+	s, err := m.OpenService(service.Name)
 	if err != nil {
 		return fmt.Errorf("could not access service: %v", err)
 	}
