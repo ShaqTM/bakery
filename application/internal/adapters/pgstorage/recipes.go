@@ -114,7 +114,7 @@ func GetRecipeQuerry(id int) string {
 }
 
 //GetRecipeWithPriceQuerry Получение рецепта c ценой по id
-func GetRecipeWithPriceQuerry(id int) string {
+func getRecipeWithPriceQuerry(id int) string {
 	return `
 	CREATE TEMP TABLE price_periods 
 	ON COMMIT DROP

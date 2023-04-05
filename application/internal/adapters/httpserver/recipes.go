@@ -60,11 +60,6 @@ func (s *Server) writeRecipe() http.Handler {
 		if err != nil {
 			sendAnswer400(w, err.Error())
 		}
-		err = mdb.UpdateTableData("recipes_content", dataMap["content"].([]interface{}), id)
-		if err != nil {
-			sendAnswer400(w, err.Error())
-		}
-
 		sendAnswer202(w, strconv.Itoa(id))
 	})
 }
