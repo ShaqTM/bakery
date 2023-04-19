@@ -10,34 +10,40 @@ import (
 
 func init() {
 	routes = append(routes, route{
-		Methods: []string{"GET", "OPTIONS"},
+		Method:  "GET",
 		Path:    "/api/readmaterials",
 		Handler: (*Server).readMaterials,
 	})
 	routes = append(routes, route{
-		Methods: []string{"GET", "OPTIONS"},
+		Method:  "GET",
 		Path:    "/api/readmaterial/",
 		Handler: (*Server).readMaterial,
 	})
 	routes = append(routes, route{
-		Methods: []string{"POST", "OPTIONS"},
+		Method:  "POST",
 		Path:    "/api/writematerialprice",
 		Handler: (*Server).writeMaterialPrice,
 	})
 	routes = append(routes, route{
-		Methods: []string{"POST", "OPTIONS"},
+		Method:  "POST",
 		Path:    "/api/writematerial",
 		Handler: (*Server).writeMaterial,
 	})
 
 }
 
-func (s *Server) writeMaterial() http.Handler {
+// writeMaterial godoc
+// @Summary      Write material to db
+// @Description  Write material to db
+// @Tags         materials
+// @Accept       json
+// @Produce      plain
+// @Param material body models.Material true "New material"
+// @Success      202  {integer}  integer "ID"
+// @Failure      400  {string}  string "error"
+// @Router       /api/writematerial [post]
+func (s *Server) writeMaterial() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//		if r.Method != "POST" {
-		//			sendAnswer405(w, "bad method")
-		//			return
-		//		}
 		if r.Method == "OPTIONS" {
 			sendAnswer200(w, "")
 			return
@@ -67,12 +73,17 @@ func (s *Server) writeMaterial() http.Handler {
 	})
 }
 
-func (s *Server) readMaterials() http.Handler {
+// readMaterials godoc
+// @Summary      Read materials from db
+// @Description  Read materials from db
+// @Tags         materials
+// @Produce      json
+// @Success      200  {array}  models.Material
+// @Failure      405  {string}  string "error"
+// @Router       /api/readmaterials [get]
+func (s *Server) readMaterials() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//		if r.Method != "GET" {
-		//			sendAnswer405(w, "bad method")
-		//			return
-		//		}
+
 		if r.Method == "OPTIONS" {
 			sendAnswer200(w, "")
 			return
@@ -96,7 +107,17 @@ func (s *Server) readMaterials() http.Handler {
 	})
 }
 
-func (s *Server) readMaterial() http.Handler {
+// readMaterial godoc
+// @Summary      Read material from db
+// @Description  Read material from db
+// @Tags         materials
+// @Produce      json
+// @Param id query string true "Material id"
+// @Success      200  {object}  models.Material
+// @Failure      400  {string} string "error"
+// @Failure      405  {string} string "error"
+// @Router       /api/readmaterial/ [get]
+func (s *Server) readMaterial() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")
@@ -134,7 +155,17 @@ func (s *Server) readMaterial() http.Handler {
 	})
 }
 
-func (s *Server) writeMaterialPrice() http.Handler {
+// writeMaterialPrice godoc
+// @Summary      Write material price to db
+// @Description  Write material price to db
+// @Tags         materials
+// @Accept       json
+// @Produce      plain
+// @Param material body models.Material_price true "New material"
+// @Success      202  {integer} integer "ID"
+// @Failure      400  {string} string "error"
+// @Router       /api/writeMaterialPrice [post]
+func (s *Server) writeMaterialPrice() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "POST" {
 		//			sendAnswer405(w, "bad method")

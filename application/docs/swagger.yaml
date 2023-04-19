@@ -1,0 +1,154 @@
+basePath: /api/v1
+definitions:
+  models.Material:
+    properties:
+      coefficient:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      price_unit_id:
+        type: integer
+      price_unit_name:
+        type: string
+      price_unit_short_name:
+        type: string
+      recipe_unit_id:
+        type: integer
+      recipe_unit_name:
+        type: string
+      recipe_unit_short_name:
+        type: string
+    type: object
+  models.Material_price:
+    properties:
+      date:
+        type: integer
+      id:
+        type: integer
+      material_id:
+        type: integer
+      price:
+        type: number
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a bakery backend server
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Bakery backend API
+  version: "1.0"
+paths:
+  /api/readmaterial/:
+    get:
+      description: Read material from db
+      parameters:
+      - description: Material id
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Material'
+        "400":
+          description: error
+          schema:
+            type: string
+        "405":
+          description: error
+          schema:
+            type: string
+      summary: Read material from db
+      tags:
+      - materials
+  /api/readmaterials:
+    get:
+      description: Read materials from db
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Material'
+            type: array
+        "405":
+          description: error
+          schema:
+            type: string
+      summary: Read materials from db
+      tags:
+      - materials
+  /api/writeMaterialPrice:
+    post:
+      consumes:
+      - application/json
+      description: Write material price to db
+      parameters:
+      - description: New material
+        in: body
+        name: material
+        required: true
+        schema:
+          $ref: '#/definitions/models.Material_price'
+      produces:
+      - text/plain
+      responses:
+        "202":
+          description: ID
+          schema:
+            type: integer
+        "400":
+          description: error
+          schema:
+            type: string
+      summary: Write material price to db
+      tags:
+      - materials
+  /api/writematerial:
+    post:
+      consumes:
+      - application/json
+      description: Write material to db
+      parameters:
+      - description: New material
+        in: body
+        name: material
+        required: true
+        schema:
+          $ref: '#/definitions/models.Material'
+      produces:
+      - text/plain
+      responses:
+        "202":
+          description: ID
+          schema:
+            type: integer
+        "400":
+          description: error
+          schema:
+            type: string
+      summary: Write material to db
+      tags:
+      - materials
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

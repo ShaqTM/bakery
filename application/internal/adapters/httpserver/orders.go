@@ -10,24 +10,24 @@ import (
 
 func init() {
 	routes = append(routes, route{
-		Methods: []string{"POST", "OPTIONS"},
+		Method:  "POST",
 		Path:    "/api/writeorder",
 		Handler: (*Server).writeOrder,
 	})
 	routes = append(routes, route{
-		Methods: []string{"GET", "OPTIONS"},
+		Method:  "GET",
 		Path:    "/api/readorders",
 		Handler: (*Server).readOrders,
 	})
 	routes = append(routes, route{
-		Methods: []string{"GET", "OPTIONS"},
+		Method:  "GET",
 		Path:    "/api/readorder/",
 		Handler: (*Server).readOrder,
 	})
 
 }
 
-func (s *Server) writeOrder() http.Handler {
+func (s *Server) writeOrder() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "POST" {
 		//			sendAnswer405(w, "bad method")
@@ -61,7 +61,7 @@ func (s *Server) writeOrder() http.Handler {
 	})
 }
 
-func (s *Server) readOrders() http.Handler {
+func (s *Server) readOrders() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")
@@ -88,7 +88,7 @@ func (s *Server) readOrders() http.Handler {
 	})
 }
 
-func (s *Server) readOrder() http.Handler {
+func (s *Server) readOrder() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")

@@ -11,23 +11,23 @@ import (
 // AddUnitsRoutes Добавляет обработку роутов
 func init() {
 	routes = append(routes, route{
-		Methods: []string{"POST", "OPTIONS"},
+		Method:  "POST",
 		Path:    "/api/writeunit",
 		Handler: (*Server).writeUnit,
 	})
 	routes = append(routes, route{
-		Methods: []string{"GET", "OPTIONS"},
+		Method:  "GET",
 		Path:    "/api/readunits",
 		Handler: (*Server).readUnits,
 	})
 	routes = append(routes, route{
-		Methods: []string{"GET", "OPTIONS"},
+		Method:  "GET",
 		Path:    "/api/readunit/",
 		Handler: (*Server).readUnit,
 	})
 }
 
-func (s *Server) writeUnit() http.Handler {
+func (s *Server) writeUnit() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "POST" {
 		//			sendAnswer405(w, "bad method")
@@ -62,7 +62,7 @@ func (s *Server) writeUnit() http.Handler {
 	})
 }
 
-func (s *Server) readUnits() http.Handler {
+func (s *Server) readUnits() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")
@@ -89,7 +89,7 @@ func (s *Server) readUnits() http.Handler {
 	})
 }
 
-func (s *Server) readUnit() http.Handler {
+func (s *Server) readUnit() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")

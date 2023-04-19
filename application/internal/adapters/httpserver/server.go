@@ -1,15 +1,35 @@
 package httpserver
 
+// @title           Bakery backend API
+// @version         1.0
+// @description     This is a bakery backend server
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /api/v1
+
+// @securityDefinitions.basic  BasicAuth
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 import (
 	"context"
 	"errors"
 	"net/http"
 
+	"bakery/application/docs"
 	"bakery/application/internal/config"
 	"bakery/application/internal/domain/bakery"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Server struct {
@@ -18,9 +38,9 @@ type Server struct {
 	Log    *logrus.Logger
 }
 type route struct {
-	Methods []string
+	Method  string
 	Path    string
-	Handler func(s *Server) http.Handler
+	Handler func(s *Server) http.HandlerFunc
 }
 
 var routes []route
@@ -36,17 +56,20 @@ func New(cfg *config.Config, b *bakery.Bakery, log *logrus.Logger) *Server {
 		Handler: server.addRoutes(),
 	}
 	server.Server = &httpServer
-	//docs.SwaggerInfo.BasePath = "/"
+	docs.SwaggerInfo.BasePath = "/"
 	return &server
 }
 
 func (s *Server) addRoutes() http.Handler {
 	s.Log.Info("Routes", routes)
-	router := *mux.NewRouter()
-	for _, mRoute := range routes {
-		router.Handle(mRoute.Path, mRoute.Handler(s)).Methods(mRoute.Methods...)
-	}
+	router := *chi.NewRouter()
 	router.Use(s.loggingMiddleware)
+	for _, mRoute := range routes {
+		router.Options(mRoute.Path, mRoute.Handler(s))
+		router.Method(mRoute.Method, mRoute.Path, mRoute.Handler(s))
+	}
+	router.Method("GET", "/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
+
 	return &router
 }
 
@@ -58,6 +81,7 @@ func (s *Server) Start() {
 	} else {
 		s.Log.Log(logrus.DebugLevel, "Http server stopped")
 	}
+
 }
 
 func (s *Server) Stop(ctx context.Context) error {

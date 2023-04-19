@@ -10,29 +10,29 @@ import (
 
 func init() {
 	routes = append(routes, route{
-		Methods: []string{"POST", "OPTIONS"},
+		Method:  "POST",
 		Path:    "/api/writerecipe",
 		Handler: (*Server).writeRecipe,
 	})
 	routes = append(routes, route{
-		Methods: []string{"GET", "OPTIONS"},
+		Method:  "GET",
 		Path:    "/api/readrecipes",
 		Handler: (*Server).readRecipes,
 	})
 	routes = append(routes, route{
-		Methods: []string{"GET", "OPTIONS"},
+		Method:  "GET",
 		Path:    "/api/readrecipe/",
 		Handler: (*Server).readRecipe,
 	})
 	routes = append(routes, route{
-		Methods: []string{"POST", "OPTIONS"},
+		Method:  "POST",
 		Path:    "/api/writerecipeprice",
 		Handler: (*Server).writeRecipePrice,
 	})
 
 }
 
-func (s *Server) writeRecipe() http.Handler {
+func (s *Server) writeRecipe() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "POST" {
 		//			sendAnswer405(w, "bad method")
@@ -65,7 +65,7 @@ func (s *Server) writeRecipe() http.Handler {
 	})
 }
 
-func (s *Server) readRecipes() http.Handler {
+func (s *Server) readRecipes() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")
@@ -94,7 +94,7 @@ func (s *Server) readRecipes() http.Handler {
 	})
 }
 
-func (s *Server) readRecipe() http.Handler {
+func (s *Server) readRecipe() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "GET" {
 		//			sendAnswer405(w, "bad method")
@@ -134,7 +134,7 @@ func (s *Server) readRecipe() http.Handler {
 	})
 }
 
-func (s *Server) writeRecipePrice() http.Handler {
+func (s *Server) writeRecipePrice() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//		if r.Method != "POST" {
 		//			sendAnswer405(w, "bad method")
