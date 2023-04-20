@@ -7,6 +7,11 @@ import (
 	"bakery/application/internal/domain/bakery"
 	"bakery/application/internal/ports"
 	"bakery/application/internal/service"
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -37,14 +42,18 @@ func New(inService bool, log *logrus.Logger) *App {
 
 func (app *App) Start() {
 	if app.InService {
-		app.Service.Start()
+		app.Service.Start(context.Background())
 	} else {
-		app.Storage.Start()
-		app.Httpserver.Start()
+		ctx, cancelFunc := context.WithCancel(context.Background())
+		storageStarted := make(chan int)
+		go app.Storage.Start(ctx, storageStarted)
+		<-storageStarted
+		go app.Httpserver.Start(ctx)
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+		<-c
+		cancelFunc()
+		<-time.After(10 * time.Second)
 	}
-
-}
-
-func (app *App) Stop() {
 
 }

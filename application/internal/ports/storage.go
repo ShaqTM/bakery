@@ -1,9 +1,12 @@
 package ports
 
-import "bakery/application/internal/domain/models"
+import (
+	"bakery/application/internal/domain/models"
+	"context"
+)
 
 type Storage interface {
-	Start()
+	Start(ctx context.Context, c chan int)
 	ReadMaterials(prices bool) ([]models.Material, error)
 	ReadMaterial(prices bool, id int) (models.Material, error)
 	WriteMaterial(data models.Material) (int, error)

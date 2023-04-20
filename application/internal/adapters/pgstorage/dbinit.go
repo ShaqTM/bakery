@@ -1,14 +1,16 @@
 package pgstorage
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
 // InitDatabase Проверка наличия БД, создание и обновление до последней версии
-func (s *Storage) Start() {
+func (s *Storage) Start(ctx context.Context, c chan int) {
 
 	initdb, err := sql.Open("postgres", s.config.PG_connect_string_init)
 
@@ -33,6 +35,19 @@ func (s *Storage) Start() {
 		s.Log.Fatalf("Database opening error:", err)
 	}
 	s.updateDb()
+	close(c)
+	<-ctx.Done()
+	closedChan := make(chan int)
+	go func() {
+		s.Pdb.Close()
+		close(closedChan)
+	}()
+	select {
+	case <-time.After((10 * time.Second)):
+		s.Log.Info("DB connection closed by timeout")
+	case <-closedChan:
+		s.Log.Info("DB connection closed normally")
+	}
 
 }
 func createDb(db *sql.DB, log *logrus.Logger) {

@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"bakery/application/docs"
 	"bakery/application/internal/config"
@@ -73,7 +74,13 @@ func (s *Server) addRoutes() http.Handler {
 	return &router
 }
 
-func (s *Server) Start() {
+func (s *Server) Start(ctx context.Context) {
+	go func() {
+		<-ctx.Done()
+		shutDownCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
+		defer cancelFunc()
+		s.Server.Shutdown(shutDownCtx)
+	}()
 	err := s.Server.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
 		s.Log.Error(err)
@@ -82,10 +89,6 @@ func (s *Server) Start() {
 		s.Log.Log(logrus.DebugLevel, "Http server stopped")
 	}
 
-}
-
-func (s *Server) Stop(ctx context.Context) error {
-	return s.Server.Shutdown(ctx)
 }
 
 func (s *Server) loggingMiddleware(next http.Handler) http.Handler {

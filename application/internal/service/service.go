@@ -3,6 +3,7 @@ package service
 import (
 	"bakery/application/internal/adapters/httpserver"
 	"bakery/application/internal/ports"
+	"context"
 	"fmt"
 	"time"
 
@@ -35,8 +36,9 @@ func (m *MyService) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 	changes <- svc.Status{State: svc.StartPending}
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
-	go m.Start()
-
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	m.Start(ctx)
+	defer cancelFunc()
 loop:
 	for {
 		select {
@@ -59,6 +61,8 @@ loop:
 		}
 	}
 	changes <- svc.Status{State: svc.StopPending}
+	cancelFunc()
+	<-time.After(10 * time.Second)
 	return
 }
 
@@ -85,7 +89,9 @@ func (m *MyService) RunService() {
 }
 
 // StartServer - запуск web-сервера
-func (m *MyService) Start() {
-	m.Storage.Start()
-	m.HttpServer.Start()
+func (m *MyService) Start(ctx context.Context) {
+	storageStarted := make(chan int)
+	go m.Storage.Start(ctx, storageStarted)
+	<-storageStarted
+	go m.HttpServer.Start(ctx)
 }

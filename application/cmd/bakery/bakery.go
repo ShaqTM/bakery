@@ -65,9 +65,6 @@ func main() {
 	switch cmd {
 	case "run":
 		app.Start()
-		for {
-			//		time.Sleep(10 * time.Second) // or runtime.Gosched() or similar per @misterbee
-		}
 	case "install":
 		err = app.Service.InstallService("Bakery backend service")
 	case "remove":
@@ -98,6 +95,5 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to %s %s: %v", cmd, app.Service.Name, err)
 	}
-	return
 
 }
